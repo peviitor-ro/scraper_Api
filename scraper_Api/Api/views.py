@@ -85,5 +85,30 @@ class AddView(APIView):
 class RemoveView(AddView):
     def get (self, request):
         folders = [f.path for f in os.scandir(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers')) if f.is_dir() ]
-        return Response(folders)
+        repos = list()
+        for folder in folders:
+            repos.append(folder.split('/')[-1])
+
+
+        return Response(repos)
+    
+    def post (self, request, format=None):
+        repo = request.data.get('repo')
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers')
+        
+        if repo != None:
+            process = subprocess.Popen(['rm', '-rf', repo], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+
+            log = dict()
+            if process.returncode == 0:
+                log['succes'] = stdout.decode('utf-8') + 'succes'
+            else:
+                log['error'] = stderr.decode('utf-8')
+
+            return Response(log)
+        
+        clear_url_caches()
+        
+        return Response('error')
         

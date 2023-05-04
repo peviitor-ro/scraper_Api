@@ -4,9 +4,6 @@ import os
 import subprocess
 from django.urls import clear_url_caches
 
-
-
-
 class ScraperView(APIView):
     
     """
@@ -64,10 +61,13 @@ class AddView(APIView):
     
     def post (self, request, format=None):
         url = request.data.get('url')
+        language = request.data.get('language') 
         path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers')
         
         if url != None:
+            repo = url.split('/')[-1].split('.')[0]
             process = subprocess.Popen(['git', 'clone', url], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
             stdout, stderr = process.communicate()
 
             log = dict()
@@ -75,6 +75,27 @@ class AddView(APIView):
                 log['succes'] = stdout.decode('utf-8') + 'succes'
             else:
                 log['error'] = stderr.decode('utf-8')
+
+            for file in os.listdir(os.path.join(path, repo)):
+                if "setup" in file:
+                    process = subprocess.Popen(['python3', file, 'develop'], cwd=os.path.join(path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout, stderr = process.communicate()
+                    
+
+                elif "requirements" in file:
+                    process = subprocess.Popen(['pip3', 'install', '-r', file], cwd=os.path.join(path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+
+                    stdout, stderr = process.communicate()
+
+                elif "package" in file:
+                    process = subprocess.Popen(['npm', 'i'], cwd=os.path.join(path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout, stderr = process.communicate()
+                    
+                if process.returncode == 0:
+                        log['dependencies'] = stdout.decode('utf-8') + 'succes'
+                else:
+                        log['error'] = stderr.decode('utf-8')
+                break
 
             return Response(log)
         

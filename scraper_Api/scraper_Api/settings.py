@@ -30,7 +30,10 @@ if platform.system() == 'Darwin':
 else:
     DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    'dev.laurentiumarian.ro',
+]
 
 
 # Application definition

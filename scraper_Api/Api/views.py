@@ -2,13 +2,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 import os
 import subprocess
-from django.urls import clear_url_caches
 from django.http import HttpResponse
 
 
 class ScraperView(APIView):
     extensions = {
-        'py': 'python',
+        'py': 'python3',
         'js': 'node',
     }
 

@@ -5,10 +5,11 @@ import os
 urlpatterns = [
     path('add/' , views.AddView.as_view()),
     path('remove/' , views.RemoveView.as_view()),
+    path('<path>/' , views.ScraperView.as_view()),
 ]
 
-subfolders = [f.path for f in os.scandir(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers')) if f.is_dir() ]
+# subfolders = [f.path for f in os.scandir(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers')) if f.is_dir() ]
 
-for folder in subfolders:
-    urlpatterns.append(path(folder.split('/')[-1]+'/', views.ScraperView.as_view()))
+# for folder in subfolders:
+#     urlpatterns.append(path(folder.split('/')[-1]+'/', views.ScraperView.as_view()))
 

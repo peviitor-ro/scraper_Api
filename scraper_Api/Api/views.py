@@ -1,135 +1,147 @@
-from rest_framework.response import Response  
-from rest_framework.views import APIView  
+from rest_framework.response import Response
+from rest_framework.views import APIView
 import os
 import subprocess
 from django.urls import clear_url_caches
+from django.http import HttpResponse
+
 
 class ScraperView(APIView):
-    
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
     extensions = {
         'py': 'python',
         'js': 'node',
     }
-    
-    # permission_classes = [permissions.IsAuthenticated]
-    def get(self, request, format=None):
-        path = request.path.split('/')[2]
 
-        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
+    def get(self, request, path,  format=None):
+        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
         scrapers = dict()
         exclude = ['__init__.py']
-        for file in os.listdir(scrapersFolder):
-            if file not in exclude:
-                name = file.split('.')[0]
-                scrapers[name] = file
-        return Response(scrapers)
-    
-    def post(self, request, format=None):
-        path = request.path.split('/')[2]
+        try:
+            for file in os.listdir(scrapersFolder):
+                if file not in exclude:
+                    name = file.split('.')[0]
+                    scrapers[name] = file
+            return Response(scrapers)
+        except:
+            return HttpResponse("Scraper not found", status=404)
 
-        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
+    def post(self, request, path, format=None):
+
+        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
 
         file = request.data.get('file')
         update = request.data.get('update')
 
         if file != None:
             command = self.extensions[file.split('.')[-1]]
-            process = subprocess.run([command , os.path.join(scrapersFolder, file)], capture_output=True)
+            process = subprocess.Popen([command, file], cwd=scrapersFolder, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+            
+            stdout, stderr = process.communicate()
+            
             log = dict()
             if process.returncode == 0:
-                log['succes'] = process.stdout
+                log['succes'] = stdout
             else:
-                log['error'] = process.stderr
+                log['error'] = stderr
 
             return Response(log)
-        
+
         if update != None:
-            process = subprocess.run(['git', 'pull', 'origin', 'main'], capture_output=True, text=True)
-            log = dict()
-            if process.returncode == 0:
-                log['succes'] = process.stdout
-            else:
-                log['error'] = process.stderr
-            return Response(log)
-        
-        return Response('error')
-    
-class AddView(APIView):
-    
-    def post (self, request, format=None):
-        url = request.data.get('url')
-        language = request.data.get('language') 
-        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers')
-        
-        if url != None:
-            repo = url.split('/')[-1].split('.')[0]
-            process = subprocess.Popen(['git', 'clone', url], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+            process = subprocess.Popen(['git', 'pull', 'origin', 'main'], cwd=scrapersFolder, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
             stdout, stderr = process.communicate()
 
             log = dict()
             if process.returncode == 0:
-                log['succes'] = stdout.decode('utf-8') + 'succes'
+                log['succes'] = stdout
             else:
-                log['error'] = stderr.decode('utf-8')
+                log['error'] = stderr
+            return Response(log)
 
+        return Response('error')
+
+
+class AddView(APIView):
+
+    def post(self, request, format=None):
+        url = request.data.get('url')
+
+        path = os.path.join(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))), 'scrapers')
+        
+        log = dict()
+
+        if url != None:
+            repo = url.split('/')[-1].split('.')[0]
+            process = subprocess.Popen(
+                ['git', 'clone', url], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            stdout, stderr = process.communicate()
+
+            if process.returncode == 0:
+                log["succes"] = stdout.decode("utf8") + "Repository cloned succesfully"
+            else:
+                log["error"] = stderr.decode("utf8")
+             
             for file in os.listdir(os.path.join(path, repo)):
-                if "setup" in file:
-                    process = subprocess.Popen(['python3', file, 'develop'], cwd=os.path.join(path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    stdout, stderr = process.communicate()
+                
+                if file == "setup.py":
+                    process = subprocess.Popen(['python3', file, 'develop'], cwd=os.path.join(
+                        path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     
+                    stdout, stderr = process.communicate()
 
-                elif "requirements" in file:
-                    process = subprocess.Popen(['pip3', 'install', '-r', file], cwd=os.path.join(path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+                elif file == "requirements.txt":
+                    process = subprocess.Popen(['pip3', 'install', '-r', file], cwd=os.path.join(
+                        path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                     stdout, stderr = process.communicate()
 
-                elif "package" in file:
-                    process = subprocess.Popen(['npm', 'i'], cwd=os.path.join(path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                elif file == "package.json":
+                    process = subprocess.Popen(['npm', 'i'], cwd=os.path.join(
+                        path, repo), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+              
                     stdout, stderr = process.communicate()
-                    
+
                 if process.returncode == 0:
-                        log['dependencies'] = stdout.decode('utf-8') + 'succes'
+                    log['dependencies'] = stdout.decode("utf8") 
                 else:
-                        log['error'] = stderr.decode('utf-8')
-                break
+                    log['error'] = stderr.decode('utf-8')
 
             return Response(log)
-        
-        clear_url_caches()
-        
+
         return Response('error')
-    
+
+
 class RemoveView(AddView):
-    def get (self, request):
-        folders = [f.path for f in os.scandir(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers')) if f.is_dir() ]
+    def get(self, request):
+        folders = [f.path for f in os.scandir(os.path.join(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))), 'scrapers')) if f.is_dir()]
         repos = list()
         for folder in folders:
             repos.append(folder.split('/')[-1])
 
-
         return Response(repos)
-    
-    def post (self, request, format=None):
+
+    def post(self, request, format=None):
         repo = request.data.get('repo')
-        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scrapers')
-        
+        path = os.path.join(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))), 'scrapers')
+
         if repo != None:
-            process = subprocess.Popen(['rm', '-rf', repo], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(
+                ['rm', '-rf', repo], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = process.communicate()
 
             log = dict()
             if process.returncode == 0:
-                log['succes'] = stdout.decode('utf-8') + 'succes'
+                log['succes'] = "Repository removed succesfully"
             else:
                 log['error'] = stderr.decode('utf-8')
 
             return Response(log)
-        
-        clear_url_caches()
-        
+
         return Response('error')
-        

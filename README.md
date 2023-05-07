@@ -78,12 +78,12 @@ or Bash script
 curl -X POST -d '{"repo":"your_repository_folder"}' https://dev.laurentiumarian.ro/scraper/remove/
 ```
 
-## Contribuie
-Dacă dorești să contribui la dezvoltarea scraperului, există mai multe modalități prin care poți face acest lucru. În primul rând, poți ajuta la dezvoltarea codului sursă prin adăugarea de noi funcționalități sau prin remedierea de probleme existente. În al doilea rând, poți contribui la îmbunătățirea documentației sau a traducerilor în alte limbi. În plus, dacă dorești să ajuți și nu ești sigur cum să începi, poți verifica lista noastră de probleme deschise și să ne întrebi cum poți ajuta. Pentru a obține mai multe informații, te rugăm să consulți secțiunea "Contribuie" din documentația noastră.
+## Contributions
+If you want to contribute to the development of the scraper, there are several ways you can do so. Firstly, you can help develop the source code by adding new functionalities or fixing existing issues. Secondly, you can contribute to improving the documentation or translations into other languages. Additionally, if you want to help but are unsure where to start, you can check our list of open issues and ask us how you can help. For more information, please refer to the "Contribute" section in our documentation.
 
-## Autori
- Echipa noastră este formată dintr-un grup de specialiști și entuziaști ai educației, care își doresc să aducă o contribuție semnificativă în acest domeniu. 
+## Authors
+ Our team is composed of a group of specialists and education enthusiasts who aim to make a significant contribution in this field.
 
 - [peviitor team](https://github.com/peviitor-ro)
 
-Suntem dedicați îmbunătățirii și dezvoltării continue a acestui proiect, astfel încât să putem oferi cele mai bune resurse pentru toți cei interesați.
+We are dedicated to the continuous improvement and development of this project, so that we can provide the best resources for everyone interested.

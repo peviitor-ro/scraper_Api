@@ -21,7 +21,7 @@ class ScraperView(APIView):
                 if file not in exclude:
                     name = file.split('.')[0]
                     scrapers[name] = file
-            return Response(scrapers)
+            return Response([f"Total scrapers: {len(scrapers)}", scrapers])
         except:
             return HttpResponse("Scraper not found", status=404)
 

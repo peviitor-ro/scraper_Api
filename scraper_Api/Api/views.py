@@ -42,9 +42,9 @@ class ScraperView(APIView):
             
             log = dict()
             if process.returncode == 0:
-                log['succes'] = [stdout.decode("utf8").split('\n')]
+                log['succes'] = stdout.decode("utf8").split('\n')
             else:
-                log['error'] = [stderr.decode("utf8").split('\n')]
+                log['error'] = stderr.decode("utf8").split('\n')
 
             return Response(log)
 
@@ -144,3 +144,4 @@ class RemoveView(AddView):
             return Response(log)
 
         return Response('error')
+    

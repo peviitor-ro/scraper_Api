@@ -5,6 +5,7 @@ urlpatterns = [
     path('add/' , views.AddView.as_view()),
     path('remove/' , views.RemoveView.as_view()),
     path('<path>/' , views.ScraperView.as_view()),
+    path('<path>/<scraper>/' , views.LogsView.as_view(), name='logs'),
 ]
 
 

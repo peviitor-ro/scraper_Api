@@ -3,6 +3,13 @@ from rest_framework.views import APIView
 import os
 import subprocess
 from django.http import HttpResponse
+from django.shortcuts import render, redirect
+import json
+from .models import Scraper, TestLogs
+from django.views.generic import TemplateView
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 class ScraperView(APIView):
@@ -42,7 +49,7 @@ class ScraperView(APIView):
             
             log = dict()
             if process.returncode == 0:
-                log['succes'] = stdout.decode("utf8").split('\n')
+                log['succes'] = json.loads(stdout.decode("utf8").replace("'", '"'))
             else:
                 log['error'] = stderr.decode("utf8").split('\n')
 
@@ -144,4 +151,55 @@ class RemoveView(AddView):
             return Response(log)
 
         return Response('error')
+    
+@method_decorator(csrf_exempt, name='dispatch')
+class LogsView(TemplateView):
+    def get(self, request, path, scraper):
+        template = 'logs.html'
+
+        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
+        
+        if scraper not in os.listdir(scrapersFolder):
+            return HttpResponse("Scraper not found", status=404)
+        else:
+            scraperData = Scraper.objects.filter(name=scraper).first()
+
+            if scraperData == None:
+                scraperData = Scraper.objects.create(name=scraper)
+            logs = TestLogs.objects.filter(scraper=scraperData)
+
+        context = {
+            'scraper': scraperData,
+            'logs': logs
+        }
+
+        return render(request, template, context)
+    
+    def post(self, request, path, scraper):
+        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
+        
+        if scraper not in os.listdir(scrapersFolder):
+            return HttpResponse("Scraper not found", status=404)
+        else:
+            data = json.loads(request.body)
+            logs = data.get('logs')
+            is_success = data.get('is_success')
+
+            choices = ["Pass", "Success"]
+
+            scraperData = Scraper.objects.filter(name=scraper).first()
+
+            if scraperData == None:
+                scraperData = Scraper.objects.create(name=scraper)
+
+            if is_success not in choices:
+                return HttpResponse("Invalid status", status=400)
+            else:
+                logs = TestLogs.objects.create(scraper=scraperData, test_result=logs, is_success=is_success)
+
+            return redirect('logs', path=path, scraper=scraperData)
+        
+
     

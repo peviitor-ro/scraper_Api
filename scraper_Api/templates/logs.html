@@ -2,16 +2,174 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test</title>
-</head>
-<body>
-    <h1>{{scraper}}</h1>
-    {% for log in logs %}
-        <p>{{ log.test_result }} {{log.is_success}}</p>
-    {% endfor %}
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Logs</title>
+        <style>
+            table {
+                width: 100%;
+            }
+            table,
+            th,
+            td {
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 10px;
+                max-height: 100vh;
+                overflow: auto;
+            }
+            input, select {
+                width: 100%;
+                height: 100%;
+                border: none;
+                outline: none;
+                margin: 0;
+                padding: 0;
+            }
+  
+        </style>
+    </head>
+    <body>
+        <h1>{{ scraper }}</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                    {% if log.test_result %}
+                        <tr>
+                            <td>{{ log.test_date }}</td>
+                            <td>{{ log.test_result }}</td>
+                            <td {% if log.is_success == 'Pass' %} style="color:green" {% else %} style="color:red" {% endif %}>{{ log.is_success }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td>{{ log.test_date }}</td>
+                            <td></td>
+                            <td {% if log.is_success == 'Pass' %} style="color:green" {% else %} style="color:red" {% endif %}>{{ log.is_success }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        <button id="add" value="Add test">Add test</button>
+
+
+        <script>
+            const mounts = {
+                1: 'January',
+                2: 'February',
+                3: 'March',
+                4: 'April',
+                5: 'May',
+                6: 'June',
+                7: 'July',
+                8: 'August',
+                9: 'Septemper',
+                10: 'October',
+                11: 'November',
+                12: 'December'
+            }
+
+            function createInput() {
+                const tbody = document.querySelector('tbody');
+                const tr = document.createElement('tr');
+                tr.setAttribute('id', 'tr');
+                tbody.prepend(tr);
+
+                const tdDate = document.createElement('td');
+                const dateInput = document.createElement('div');
+                const date = new Date();
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const hour = date.getHours();
+                const minute = date.getMinutes();
+                const datetime = `${mounts[month]} ${day}, ${year}, ${hour}:${minute}`;
+                dateInput.innerHTML = datetime
+                tr.appendChild(tdDate);
+                tdDate.appendChild(dateInput);
+                
+                const tdLogs = document.createElement('td');
+                const logs = document.createElement('input');
+                logs.setAttribute('type', 'text');
+                logs.setAttribute('name', 'logs');
+                logs.setAttribute('placeholder', 'Logs');
+                logs.setAttribute('id', 'logs');
+
+                tr.appendChild(tdLogs);
+                tdLogs.appendChild(logs);
+
+                const tdStatus = document.createElement('td');
+                const status = document.createElement('select');
+                status.setAttribute('name', 'status');
+                status.setAttribute('id', 'status');
+
+                const option1 = document.createElement('option');
+                option1.setAttribute('value', 'Pass');
+                option1.innerHTML = 'Pass';
+                const option2 = document.createElement('option');
+                option2.setAttribute('value', 'Fail');
+                option2.innerHTML = 'Fail';
+
+                status.appendChild(option1);
+                status.appendChild(option2);
+
+                tr.appendChild(tdStatus);
+                tdStatus.appendChild(status);
+                
+            }
+
+            function deleteImputs() {
+                const tr = document.querySelector('#tr');
+                tr.remove();
+            }
+
+            const add = document.querySelector('#add');
+
+            add.addEventListener('click', (event) => {
+
+                if (event.target.value === 'Add test') {
+                    event.target.value = 'Save';
+                    add.innerHTML = 'Save';
+                    createInput();
+            
+                } else if (event.target.value === 'Save') {
+                    const logs = document.querySelector('#logs').value;
+                    const status = document.querySelector('#status').value;
+                    const url = window.location.href;
+
+                    const data = {
+                        'logs': logs,
+                        'is_success': status
+                    }
+
+                    console.log(url);
+
+                    fetch(url,{
+                        method: 'POST',
+                        headers:{
+                            "Content-type": "application/json",
+                        },
+                        body: JSON.stringify(data),
+                    })
+                    .then(data => {
+                        if (data.status === 200) {
+                            window.location.reload();
+                            deleteImputs();
+                            event.target.value = 'Add test';
+                            add.innerHTML = 'Add test';
+                        }
+                    })
+                }
+            })
+        </script>
+    </body>
 </html>

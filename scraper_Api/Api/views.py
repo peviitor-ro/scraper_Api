@@ -167,7 +167,7 @@ class LogsView(TemplateView):
 
             if scraperData == None:
                 scraperData = Scraper.objects.create(name=scraper)
-            logs = TestLogs.objects.filter(scraper=scraperData)
+            logs = TestLogs.objects.filter(scraper=scraperData).order_by('-test_date')
 
         context = {
             'scraper': scraperData,
@@ -183,11 +183,14 @@ class LogsView(TemplateView):
         if scraper not in os.listdir(scrapersFolder):
             return HttpResponse("Scraper not found", status=404)
         else:
+
+            print(request.body)
             data = json.loads(request.body)
             logs = data.get('logs')
             is_success = data.get('is_success')
+            
 
-            choices = ["Pass", "Success"]
+            choices = ["Pass", "Fail"]
 
             scraperData = Scraper.objects.filter(name=scraper).first()
 

@@ -57,7 +57,7 @@ class ScraperView(APIView):
                 
                 log = dict()
                 if process.returncode == 0:
-                    log['succes'] = json.loads(stdout.decode("utf8").replace("'", '"'))
+                    log['succes'] = json.loads(stdout.decode("utf8"))
                     log['status'] = 'active'
                     log['jobs'] = len(log['succes'])
                 else:

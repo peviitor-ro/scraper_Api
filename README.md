@@ -47,6 +47,35 @@ curl -X POST -d '{"file":"your_file.extension"}' https://dev.laurentiumarian.ro/
 
 ```
 
+#### Run Forced Scraper
+
+```bash
+curl -X POST -d '{"file":"your_file.extension","force":"true"}' https://dev.laurentiumarian.ro/scraper/your_repository_root_folder/
+
+``` 
+
+#### Running Tests
+
+Each scraper includes a dedicated section for logging activities
+
+[comment]: <> (image here)
+
+This section allows you to review the results of the scraper's automated test. The test is separate from the scraper itself and can be implemented in any programming language.
+
+##### Test endpoint
+
+### Test Pass or Fail
+
+```bash
+curl -X POST -d '{"is_succes":"Fail or Pass", "logs":"your message"}' https://dev.laurentiumarian.ro/scraper/your_repository_root_folder/scraper.extension
+```
+
+This endpoint serves the purpose of sending test results to the scraper. A request is sent to the endpoint with two parameters: "is_success" and "logs." The "is_success" parameter is used to indicate the success or failure of the test. The "logs" parameter allows sending a custom message to the scraper. The scraper will display this message in the "Logs" section, providing visibility into the test execution process.
+
+You can enhance the functionality by including a manual test feature with an "Add Test" button. When a test is added, the scraper's behavior can be controlled based on the test status. If the status is set to "Pass," the scraper will run automatically. On the other hand, if the status is marked as "Fail," the scraper will not run and will be deactivated.
+
+[comment]: <> (image here)
+
 Running a Scraper from the "sites" folder
 
 ### Update Files`POST scraper/your_github_repository/`

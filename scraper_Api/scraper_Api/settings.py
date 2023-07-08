@@ -31,9 +31,13 @@ else:
     DEBUG = False
 
 ALLOWED_HOSTS = [
-    '*'
+    'localhost',
+    'dev.laurentiumarian.ro',
 ]
-
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'https://dev.laurentiumarian.ro'
+]
 
 # Application definition
 

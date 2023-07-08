@@ -41,34 +41,28 @@ class ScraperView(APIView):
         status = request.data.get('status')
         force = request.data.get('force')
 
-        if file != None:
+        if file != None :
             scraperData = Scraper.objects.filter(name=file).first()
             if scraperData == None:
                 scraperData = Scraper.objects.create(name=file)
-            logs = TestLogs.objects.filter(scraper=scraperData).order_by('-test_date')
 
-            if len(logs) == 0 or logs[0].is_success == 'Pass' or force == 'true':
-
-                command = self.extensions[file.split('.')[-1]]
-                process = subprocess.Popen([command, file], cwd=scrapersFolder, stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-                
-                stdout, stderr = process.communicate()
-                
-                log = dict()
-                if process.returncode == 0:
-                    try:
-                        log['succes'] = json.loads(stdout.decode("utf8"))
-                    except:
-                        log['succes'] = stdout.decode("utf8").split('\n')
-                    log['status'] = 'active'
-                    log['jobs'] = len(log['succes'])
-                else:
-                    log['error'] = stderr.decode("utf8").split('\n')
-
-                return Response(log)
+            command = self.extensions[file.split('.')[-1]]
+            process = subprocess.Popen([command, file], cwd=scrapersFolder, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            
+            stdout, stderr = process.communicate()
+            
+            log = dict()
+            if process.returncode == 0:
+                try:
+                    log['succes'] = json.loads(stdout.decode("utf8"))
+                except:
+                    log['succes'] = stdout.decode("utf8").split('\n')
+                log['jobs'] = len(log['succes'])
             else:
-                return Response({"status":"inactive"})
+                log['error'] = stderr.decode("utf8").split('\n')
+
+            return Response(log)
 
         if update != None:
             process = subprocess.Popen(['git', 'pull', 'origin', 'main'], cwd=scrapersFolder, stdout=subprocess.PIPE,

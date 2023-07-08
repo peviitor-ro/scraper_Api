@@ -32,7 +32,7 @@ else:
 
 ALLOWED_HOSTS = [
     'localhost',
-    'dev.laurentiumarian.ro',
+    'https://dev.laurentiumarian.ro',
 ]
 
 

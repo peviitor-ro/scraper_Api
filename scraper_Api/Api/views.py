@@ -82,7 +82,7 @@ class ScraperView(APIView):
                 log['error'] = stderr
             return Response(log)
         
-        if status != None and file != None:
+        if status != None :
             scraperData = Scraper.objects.filter(name=status).first()
             if scraperData == None:
                 return Response({"status":"inactive"})

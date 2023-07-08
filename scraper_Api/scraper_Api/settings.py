@@ -31,8 +31,7 @@ else:
     DEBUG = False
 
 ALLOWED_HOSTS = [
-    'localhost',
-    'https://dev.laurentiumarian.ro',
+    '*'
 ]
 
 

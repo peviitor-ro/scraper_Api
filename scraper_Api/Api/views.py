@@ -19,7 +19,7 @@ class ScraperView(APIView):
     def get(self, request, path,  format=None):
         scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
-        
+            
         scrapers = dict()
         exclude = ['__init__.py']
         try:
@@ -185,7 +185,9 @@ class LogsView(TemplateView):
         scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
         
-        if scraper not in os.listdir(scrapersFolder):
+        scraperList = list(map(lambda x: x.lower(), os.listdir(scrapersFolder)))
+        
+        if scraper.lower() not in scraperList:
             return HttpResponse("Scraper not found", status=404)
         else:
             scraperData = Scraper.objects.filter(name=scraper).first()
@@ -205,16 +207,16 @@ class LogsView(TemplateView):
         scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
         
-        if scraper not in os.listdir(scrapersFolder):
+        scraperList = list(map(lambda x: x.lower(), os.listdir(scrapersFolder)))
+    
+        if scraper.lower() not in scraperList:
             return HttpResponse("Scraper not found", status=404)
         else:
 
-            print(request.body)
             data = json.loads(request.body)
             logs = data.get('logs')
             is_success = data.get('is_success')
             
-
             choices = ["Pass", "Fail"]
 
             scraperData = Scraper.objects.filter(name=scraper).first()

@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 import os
 import subprocess
 from django.http import HttpResponse
+import re
+import json
 
 
 class ScraperView(APIView):
@@ -42,7 +44,11 @@ class ScraperView(APIView):
             
             log = dict()
             if process.returncode == 0:
-                log['succes'] = stdout.decode("utf8").split('\n')
+                #find the json in the stdout
+                pattern = re.compile(r"(\[.*?\])", re.DOTALL)
+                objects = json.loads(re.search(pattern, stdout.decode("utf8")).group(1))
+                log['succes'] = objects
+                log["Total"] = len(objects)
             else:
                 log['error'] = stderr.decode("utf8").split('\n')
 

@@ -74,7 +74,7 @@ class AddView(APIView):
         log = dict()
 
         if url != None:
-            repo = url.split('/')[-1].split('.')[0]
+            repo = url.split('/')[-1].split('.git')[0]
             process = subprocess.Popen(
                 ['git', 'clone', url], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

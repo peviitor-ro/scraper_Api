@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import Scraper, TestLogs
 
-# Register your models here.
+admin.site.register(Scraper)
+admin.site.register(TestLogs)

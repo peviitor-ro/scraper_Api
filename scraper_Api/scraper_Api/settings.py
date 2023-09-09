@@ -39,6 +39,14 @@ CSRF_TRUSTED_ORIGINS = [
     'https://dev.laurentiumarian.ro'
 ]
 
+# Cors
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'https://dev.laurentiumarian.ro',
+    'http://127.0.0.1:5500',
+    'https://scraper-ui.netlify.app'
+]
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -51,6 +59,8 @@ INSTALLED_APPS = [
 
     # Api
     'rest_framework',
+    # Cors
+    'corsheaders',
 
     # Apps
     'Api',
@@ -64,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # Cors
 ]
 
 ROOT_URLCONF = 'scraper_Api.urls'

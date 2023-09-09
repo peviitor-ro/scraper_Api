@@ -1,3 +1,18 @@
-django==4.2.1
-djangorestframework==3.14
+asgiref==3.7.2
+beautifulsoup4==4.9.3
+bs4==0.0.1
+certifi==2020.12.5
+chardet==4.0.0
+Django==4.2.1
+django-cors-headers==4.2.0
+djangorestframework==3.14.0
+idna==2.10
+lxml==4.9.2
+peviitor-pyscraper==0.0.5
+-e git+https://github.com/peviitor-ro/based_scraper_py.git@5acd178d546c767b383b02d683d1065789912d5a#egg=peviitor_scraper
 pytz==2023.3
+requests==2.25.1
+soupsieve==2.2
+sqlparse==0.4.4
+typing_extensions==4.7.1
+urllib3==1.26.3

@@ -10,6 +10,7 @@ import subprocess
 import json
 import os
 import re
+import requests
 
 class ScraperView(APIView):
     extensions = {
@@ -227,3 +228,17 @@ class LogsView(TemplateView):
                 logs = TestLogs.objects.create(scraper=scraperData, test_result=logs, is_success=is_success)
 
             return redirect('logs', path=path, scraper=scraperData)
+
+class PeviitorData(APIView):
+    def post(self, request, format=None):
+        company = request.data.get('company')
+        if company != None:
+            solr = f"https://solr.peviitor.ro/solr/jobs/select?indent=true&q.op=OR&q=company%3A%22{company}%22&rows=1000&useParams="
+            response = requests.get(solr)
+            data = {
+                "succes": response.json().get('response').get('docs'),
+                "Total": response.json().get('response').get('numFound')
+            }
+
+            return Response(data)
+        return Response('error')

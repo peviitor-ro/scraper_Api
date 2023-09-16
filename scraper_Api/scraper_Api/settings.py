@@ -45,6 +45,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://dev.laurentiumarian.ro',
     'http://127.0.0.1:5500',
     'https://scraper-ui.netlify.app'
+    'https://scrapers.peviitor.ro'
 ]
 
 # Application definition

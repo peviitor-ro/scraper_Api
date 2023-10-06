@@ -18,58 +18,80 @@ class ScraperView(APIView):
         'js': 'node',
     }
 
+    acceptedDirs = ['sites', 'spiders']
+
     def get(self, request, path,  format=None):
         scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
+            os.path.abspath(__file__))), 'scrapers/' + path)
             
         scrapers = dict()
         exclude = ['__init__.py']
-        try:
-            for file in os.listdir(scrapersFolder):
-                if file not in exclude:
-                    name = file.split('.')[0]
-                    scrapers[name] = file
-            return Response([f"Total scrapers: {len(scrapers)}", scrapers])
-        except:
+
+        for root, _ , files in os.walk(scrapersFolder):
+            if root.split('/')[-1] in self.acceptedDirs:
+                for file in files:
+                    if file not in exclude:
+                        name = file.split('.')[0]
+                        scrapers[name] = file
+        if len(scrapers) == 0:
             return HttpResponse("Scraper not found", status=404)
+        return Response([f"Total scrapers: {len(scrapers)}", scrapers])
+
 
     def post(self, request, path, format=None):
 
         scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
+            os.path.abspath(__file__))), 'scrapers/' + path)
+        
+        dir = ''
+        
+        for  root, _ , _ in os.walk(scrapersFolder):
+            if root.split('/')[-1] in self.acceptedDirs:
+                dir = root
+                break
 
         file = request.data.get('file')
         update = request.data.get('update')
         status = request.data.get('status')
         force = request.data.get('force')
 
+        log = dict()
+
         if file != None :
             scraperData = Scraper.objects.filter(name=file).first()
             if scraperData == None:
                 scraperData = Scraper.objects.create(name=file)
 
-            command = self.extensions[file.split('.')[-1]]
-            process = subprocess.Popen([command, file], cwd=scrapersFolder, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            
-            stdout, stderr = process.communicate()
-            
-            log = dict()
-            if process.returncode == 0:
-                pattern = re.compile(r"(\[.*?\])", re.DOTALL)
-                try:
-                    objects = json.loads(re.search(pattern, stdout.decode("utf8")).group(1))
-                except:
-                    objects = stdout.decode("utf8").split('\n')
-                log['succes'] = objects
-                log["Total"] = len(objects)
-            else:
-                log['error'] = stderr.decode("utf8").split('\n')
+            # to do: add scrapy crawl command
+            try:
+                command = self.extensions[file.split('.')[-1]]
+            except KeyError:
+                command = 'scrapy crawl'
+
+            try:
+                process = subprocess.Popen([ com for com in command.split(' ')] + [file] , cwd=dir, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+                
+                stdout, stderr = process.communicate()
+                
+                
+                if process.returncode == 0:
+                    pattern = re.compile(r"(\[.*?\])", re.DOTALL)
+                    try:
+                        objects = json.loads(re.search(pattern, stdout.decode("utf8")).group(1))
+                    except:
+                        objects = stdout.decode("utf8").split('\n')
+                    log['succes'] = objects
+                    log["Total"] = len(objects)
+                else:
+                    log['error'] = stderr.decode("utf8").split('\n')
+            except FileNotFoundError as e:
+                log['error'] = "File not found"
 
             return Response(log)
 
         if update != None:
-            process = subprocess.Popen(['git', 'pull', 'origin', 'main'], cwd=scrapersFolder, stdout=subprocess.PIPE,
+            process = subprocess.Popen(['git', 'pull', 'origin', 'main'], cwd=dir, stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
             stdout, stderr = process.communicate()
 

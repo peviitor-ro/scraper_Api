@@ -39,6 +39,9 @@ CSRF_TRUSTED_ORIGINS = [
     'https://dev.laurentiumarian.ro'
 ]
 
+# Default Timeout
+DEFAULT_TIMEOUT = 60 * 5
+
 # Cors
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',

@@ -65,8 +65,10 @@ class ScraperView(APIView):
             # to do: add scrapy crawl command
             try:
                 command = self.extensions[file.split('.')[-1]]
+                pattern = re.compile(r"\[([\s\S]*)\]")
             except KeyError:
                 command = 'scrapy crawl'
+                pattern = re.compile(r"\[([\s\S]*?)\]")
 
             try:
                 process = subprocess.Popen([ com for com in command.split(' ')] + [file] , cwd=dir, stdout=subprocess.PIPE,
@@ -74,11 +76,10 @@ class ScraperView(APIView):
                 
                 stdout, stderr = process.communicate()
                 
-                
                 if process.returncode == 0:
-                    pattern = re.compile(r"(\[.*?\])", re.DOTALL)
+                    print(json.loads(re.search(pattern, stdout.decode("utf8")).group(0)))
                     try:
-                        objects = json.loads(re.search(pattern, stdout.decode("utf8")).group(1))
+                        objects = json.loads(re.search(pattern, stdout.decode("utf8")).group(0))
                     except:
                         objects = stdout.decode("utf8").split('\n')
                     log['succes'] = objects

@@ -77,7 +77,6 @@ class ScraperView(APIView):
                 stdout, stderr = process.communicate()
                 
                 if process.returncode == 0:
-                    print(json.loads(re.search(pattern, stdout.decode("utf8")).group(0)))
                     try:
                         objects = json.loads(re.search(pattern, stdout.decode("utf8")).group(0))
                     except:

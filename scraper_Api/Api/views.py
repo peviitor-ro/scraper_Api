@@ -75,10 +75,12 @@ class ScraperView(APIView):
                                         stderr=subprocess.PIPE)
                 
                 stdout, stderr = process.communicate()
-                
                 if process.returncode == 0:
                     try:
-                        objects = json.loads(re.search(pattern, stdout.decode("utf8")).group(0))
+                        objects = json.loads(
+                            # to do:Add remove elements in database
+                            re.search(pattern, stdout.decode("utf8").replace("<Response [200]>","")
+                                      ).group(0))
                     except:
                         objects = stdout.decode("utf8").split('\n')
                     log['succes'] = objects

@@ -5,12 +5,31 @@ from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from .models import Scraper, TestLogs
+from .models import Scraper, TestLogs, DataSet
+from .serializer import DataSetSerializer
+
+from datetime import datetime, timedelta
 import subprocess
 import json
 import os
 import re
 import requests
+
+def get_scrapers(folder):
+    path = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), 'scrapers/' + folder)
+    scrapers = dict()
+    exclude = ['__init__.py']
+
+    accepted_dirs = ['sites', 'spiders']
+
+    for root, _ , files in os.walk(path):
+        if root.split('/')[-1] in accepted_dirs:
+            for file in files:
+                if file not in exclude:
+                    name = file.split('.')[0]
+                    scrapers[name] = file
+    return scrapers
 
 class ScraperView(APIView):
     extensions = {
@@ -21,13 +40,13 @@ class ScraperView(APIView):
     acceptedDirs = ['sites', 'spiders']
 
     def get(self, request, path,  format=None):
-        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
+        path = os.path.join(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__))), 'scrapers/' + path)
             
         scrapers = dict()
         exclude = ['__init__.py']
 
-        for root, _ , files in os.walk(scrapersFolder):
+        for root, _ , files in os.walk(path):
             if root.split('/')[-1] in self.acceptedDirs:
                 for file in files:
                     if file not in exclude:
@@ -40,12 +59,12 @@ class ScraperView(APIView):
 
     def post(self, request, path, format=None):
 
-        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
+        path = os.path.join(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__))), 'scrapers/' + path)
         
         dir = ''
         
-        for  root, _ , _ in os.walk(scrapersFolder):
+        for  root, _ , _ in os.walk(path):
             if root.split('/')[-1] in self.acceptedDirs:
                 dir = root
                 break
@@ -204,10 +223,10 @@ class LogsView(TemplateView):
     def get(self, request, path, scraper):
         template = 'logs.html'
 
-        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
+        path = os.path.join(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
         
-        scraperList = list(map(lambda x: x.lower(), os.listdir(scrapersFolder)))
+        scraperList = list(map(lambda x: x.lower(), os.listdir(path)))
         
         if scraper.lower() not in scraperList:
             return HttpResponse("Scraper not found", status=404)
@@ -226,10 +245,10 @@ class LogsView(TemplateView):
         return render(request, template, context)
     
     def post(self, request, path, scraper):
-        scrapersFolder = os.path.join(os.path.dirname(os.path.dirname(
+        path = os.path.join(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__))), 'scrapers/' + path + "/sites")
         
-        scraperList = list(map(lambda x: x.lower(), os.listdir(scrapersFolder)))
+        scraperList = list(map(lambda x: x.lower(), os.listdir(path)))
     
         if scraper.lower() not in scraperList:
             return HttpResponse("Scraper not found", status=404)
@@ -266,3 +285,47 @@ class PeviitorData(APIView):
 
             return Response(data)
         return Response('error')
+    
+class DataSetView(APIView):
+    def get(self, request, path, scraper, format=None):
+
+        scraper_data = Scraper.objects.filter(name=scraper).first()
+
+        if scraper_data == None:
+            scraper_name = scraper.split('.')[0]
+            if get_scrapers(path).get(scraper_name) == None:
+                return HttpResponse("Scraper not found", status=404)
+            else:
+                Scraper.objects.create(name=scraper)
+                scraper_data = Scraper.objects.filter(name=scraper).first()
+
+        # get last 30 days  
+        current_date = datetime.now()
+        last_30_days = current_date - timedelta(days=30)
+        data = DataSet.objects.filter(scraper=scraper_data, date__gte=last_30_days).order_by('-date')
+
+        serializer = DataSetSerializer(data, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request, path, scraper, format=None):
+        scraper_data = Scraper.objects.filter(name=scraper).first()
+
+        if scraper_data == None:
+            scraper_name = scraper.split('.')[0]
+            if get_scrapers(path).get(scraper_name) == None:
+                return HttpResponse("Scraper not found", status=404)
+            else:
+                Scraper.objects.create(name=scraper)
+                scraper_data = Scraper.objects.filter(name=scraper).first()
+        
+        data = request.data.get('data')
+        if data != None:
+            from datetime import datetime
+            current_date = datetime.now()
+
+            DataSet.objects.update_or_create(scraper=scraper_data ,date=current_date, defaults={'data': data})
+
+            return Response("succes")
+        return Response('error')
+    
+    

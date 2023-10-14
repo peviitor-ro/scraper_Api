@@ -18,3 +18,7 @@ class TestLogs (models.Model):
     def __str__(self):
         return self.scraper.name + " " + str(self.test_date)
     
+class DataSet (models.Model):
+    scraper = models.ForeignKey(Scraper, on_delete=models.CASCADE, related_name='ScraperData')
+    date = models.DateField()
+    data = models.IntegerField()

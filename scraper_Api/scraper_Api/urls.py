@@ -18,10 +18,12 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 from django.conf import settings
 from Api.views import PeviitorData
+from Api.views import DataSetView as DataSet
 
 urlpatterns = [
     path('', PeviitorData.as_view()),
     path('admin/', admin.site.urls),
     path('scraper/', include('Api.urls')),
+    path('dataset/<path>/<scraper>/', DataSet.as_view()),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}, name='static'),
 ]

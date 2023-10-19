@@ -302,7 +302,7 @@ class DataSetView(APIView):
         # get last 30 days  
         current_date = datetime.now()
         last_30_days = current_date - timedelta(days=30)
-        data = DataSet.objects.filter(scraper=scraper_data, date__gte=last_30_days).order_by('-date')
+        data = DataSet.objects.filter(scraper=scraper_data, date__gte=last_30_days).order_by('date')
 
         serializer = DataSetSerializer(data, many=True)
         return Response(serializer.data)

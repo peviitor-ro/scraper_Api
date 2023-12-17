@@ -35,6 +35,7 @@ class ScraperView(APIView):
     extensions = {
         'py': 'python3',
         'js': 'node',
+        'jmx': 'jmeter -n -t',
     }
 
     acceptedDirs = ['sites', 'spiders']

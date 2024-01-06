@@ -68,6 +68,7 @@ INSTALLED_APPS = [
 
     # Apps
     'Api',
+    'validator',
 ]
 
 MIDDLEWARE = [

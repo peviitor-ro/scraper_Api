@@ -33,7 +33,9 @@ else:
 ALLOWED_HOSTS = [
     'localhost',
     'dev.laurentiumarian.ro',
+    'api.laurentiumarian.ro',
 ]
+
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'https://dev.laurentiumarian.ro',

@@ -37,7 +37,7 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'https://dev.laurentiumarian.ro',
-    'http://api.laurentiumarian.ro',
+    'https://api.laurentiumarian.ro',
 ]
 
 # Default Timeout

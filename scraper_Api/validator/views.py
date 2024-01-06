@@ -1,9 +1,13 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializer import JobAddSerializer, CompanySerializer
+from .serializer import (
+    JobAddSerializer, 
+    CompanySerializer,
+    GetJobSerializer,
+    )
 from .models import Job, Company
 from django.shortcuts import get_object_or_404
-import json
+
 
 
 def transform_data(data):
@@ -14,7 +18,6 @@ def transform_data(data):
         return data_string
     else:
         return ""
-
 
 class ScraperValidator(APIView):
     def post(self, request):
@@ -75,16 +78,16 @@ class GetCompanyData(APIView):
         if company:
             company = get_object_or_404(Company, company=company.lower())
             jobs_objects = Job.objects.filter(company=company.id)
-            serializer = JobAddSerializer(jobs_objects, many=True)
+            serializer = GetJobSerializer(jobs_objects, many=True)
 
             jobs = []
             for job in serializer.data:
+
                 job['company'] = company.company
                 job['country'] = job['country'].split(',')
                 job['city'] = job['city'].split(',')
                 job['county'] = job['county'].split(',')
 
-                del job['job_id']
                 del job['company_name']
 
                 jobs.append(job)
@@ -95,9 +98,7 @@ class GetCompanyData(APIView):
         
 class EditJob(APIView):
     def post(self, request):
-        print(request.data)
         jobs = request.data
-        print(type(jobs))
         for job in jobs:
             job_link = transform_data(job.get('job_link'))
             job_title = transform_data(job.get('job_title'))
@@ -105,7 +106,6 @@ class EditJob(APIView):
             city = transform_data(job.get('city'))
             county = transform_data(job.get('county'))
             remote = transform_data(job.get('remote'))
-            
             
             job_obj = Job.objects.get(job_link=job_link)
             if job_obj:      
@@ -119,7 +119,33 @@ class EditJob(APIView):
             else:
                 return Response({'message': 'Job not found'})
 
-        
         return Response({'message': 'Job edited'})
+    
+class DeleteJob(APIView):
+    def post(self, request):
+        jobs = request.data
+        for job in jobs:
+            job_link = transform_data(job.get('job_link'))
+            job_obj = Job.objects.get(job_link=job_link)
+            if job_obj:
+                job_obj.deleted = True
+            else:
+                return Response({'message': 'Job not found'})
+        
+        return Response({'message': 'Job deleted'})
+
+class PublishJob(APIView):
+    def post(self, request):
+        jobs = request.data
+        for job in jobs:
+            job_link = transform_data(job.get('job_link'))
+            job_obj = Job.objects.get(job_link=job_link)
+            if job_obj:
+                job_obj.published = True
+                job_obj.save()
+            else:
+                return Response({'message': 'Job not found'})
+        
+        return Response({'message': 'Job published'})
         
     

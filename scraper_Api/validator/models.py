@@ -18,6 +18,7 @@ class Job(models.Model):
     remote = models.CharField(max_length=50, blank=True)
     edited = models.BooleanField(default=False)
     published = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return self.job_title

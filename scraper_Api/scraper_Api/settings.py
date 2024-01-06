@@ -36,7 +36,8 @@ ALLOWED_HOSTS = [
 ]
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
-    'https://dev.laurentiumarian.ro'
+    'https://dev.laurentiumarian.ro',
+    'http://api.laurentiumarian.ro',
 ]
 
 # Default Timeout
@@ -48,7 +49,8 @@ CORS_ALLOWED_ORIGINS = [
     'https://dev.laurentiumarian.ro',
     'http://127.0.0.1:5500',
     'https://scraper-ui.netlify.app',
-    'https://scrapers.peviitor.ro'
+    'https://scrapers.peviitor.ro',
+    'https://api.laurentiumarian.ro',
 ]
 
 # Application definition

@@ -128,7 +128,8 @@ class DeleteJob(APIView):
             job_link = transform_data(job.get('job_link'))
             job_obj = Job.objects.get(job_link=job_link)
             if job_obj:
-                job_obj.deleted = True
+                job_obj.deleted = not job_obj.deleted
+                job_obj.save()
             else:
                 return Response({'message': 'Job not found'})
         
@@ -141,7 +142,7 @@ class PublishJob(APIView):
             job_link = transform_data(job.get('job_link'))
             job_obj = Job.objects.get(job_link=job_link)
             if job_obj:
-                job_obj.published = True
+                job_obj.published = not job_obj.published
                 job_obj.save()
             else:
                 return Response({'message': 'Job not found'})

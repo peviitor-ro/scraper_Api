@@ -5,5 +5,7 @@ urlpatterns = [
     path('add/', views.ScraperValidator.as_view()),
     path('get/', views.GetCompanyData.as_view()),
     path('edit/', views.EditJob.as_view()),
+    path('delete/', views.DeleteJob.as_view()),
+    path('publish/', views.PublishJob.as_view()),
 ]
 

@@ -25,10 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-nh-rh#j35y9n9o11$h@vto$^#5gr73f!0&wqml_1g!n_d(5%&g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if platform.system() == 'Darwin':
+if platform.system() == 'Darwin' or platform.system() == 'windows':
     DEBUG = True
 else:
     DEBUG = False
+
+APPEND_SLASH = False
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -40,20 +42,25 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'https://dev.laurentiumarian.ro',
     'https://api.laurentiumarian.ro',
+
 ]
 
 # Default Timeout
 DEFAULT_TIMEOUT = 60 * 5
 
 # Cors
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = (
     'http://localhost:8000',
     'https://dev.laurentiumarian.ro',
     'http://127.0.0.1:5500',
+    'http://localhost:5500',
     'https://scraper-ui.netlify.app',
     'https://scrapers.peviitor.ro',
     'https://api.laurentiumarian.ro',
-]
+)
+CORS_ALLOW_HEADERS = ('*')
+CORS_ALLOW_METHODS = ['GET', 'POST']
+CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
 
@@ -67,23 +74,33 @@ INSTALLED_APPS = [
 
     # Api
     'rest_framework',
+    'rest_framework.authtoken',
+    'oauth2_provider',
+    'social_django',
+    'drf_social_oauth2',
+
     # Cors
     'corsheaders',
 
     # Apps
     'Api',
     'validator',
+
 ]
 
 MIDDLEWARE = [
+    # Cors
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware', # Cors
+    
+    # Github
+    'social_django.middleware.SocialAuthExceptionMiddleware'
 ]
 
 ROOT_URLCONF = 'scraper_Api.urls'
@@ -101,6 +118,10 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                # OAuth2
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -156,9 +177,45 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join('root')
-STATICFILES_DIRS = ( os.path.join('static/'), )
+STATICFILES_DIRS = (os.path.join('static/'), )
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# OAUTH2
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # OAuth
+        'drf_social_oauth2.authentication.SocialAuthentication',
+
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+AUTHENTICATION_BACKENDS = (
+    # Others auth providers (e.g. Facebook, OpenId, etc)
+
+    # GitHub OAuth2
+    'social_core.backends.github.GithubOAuth2',
+
+    # Django
+    'django.contrib.auth.backends.ModelBackend',
+
+    # DRF Social OAuth2
+    'drf_social_oauth2.backends.DjangoOAuth2',
+
+)
+
+LOGIN_URL = '/homepage/'
+LOGIN_REDIRECT_URL = 'http://127.0.0.1:5500/profile/index.html'
+LOGOUT_URL = '/logout'
+LOGOUT_REDIRECT_URL = 'http://localhost:5500/profile/index.html'
+
+SOCIAL_AUTH_GITHUB_KEY = 'c41a2e3f5b5c972a068c'
+SOCIAL_AUTH_GITHUB_SECRET = '479c50824f1e0c53eb24512859627e68cbbf270a'

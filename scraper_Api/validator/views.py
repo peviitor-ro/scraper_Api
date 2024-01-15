@@ -8,7 +8,7 @@ from .serializer import (
 from .models import Job, Company
 from django.shortcuts import get_object_or_404
 
-
+JOB_NOT_FOUND = {'message': 'Job not found'}
 
 def transform_data(data):
     if isinstance(data, str):
@@ -70,7 +70,6 @@ class ScraperValidator(APIView):
         for job in to_delete:
             Job.objects.filter(job_link=job).delete()
     
-
 class GetCompanyData(APIView):
     def post(self, request):
         company = request.data.get('company')
@@ -117,7 +116,7 @@ class EditJob(APIView):
                 job_obj.edited = True
                 job_obj.save()
             else:
-                return Response({'message': 'Job not found'})
+                return Response(JOB_NOT_FOUND)
 
         return Response({'message': 'Job edited'})
     
@@ -131,7 +130,7 @@ class DeleteJob(APIView):
                 job_obj.deleted = not job_obj.deleted
                 job_obj.save()
             else:
-                return Response({'message': 'Job not found'})
+                return Response(JOB_NOT_FOUND)
         
         return Response({'message': 'Job deleted'})
 
@@ -145,7 +144,7 @@ class PublishJob(APIView):
                 job_obj.published = not job_obj.published
                 job_obj.save()
             else:
-                return Response({'message': 'Job not found'})
+                return Response(JOB_NOT_FOUND)
         
         return Response({'message': 'Job published'})
         

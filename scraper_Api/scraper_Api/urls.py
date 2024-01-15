@@ -17,14 +17,16 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.static import serve
 from django.conf import settings
-from Api.views import PeviitorData
 from Api.views import DataSetView as DataSet
 
 urlpatterns = [
-    path('', PeviitorData.as_view()),
+    path('', include('oauth.urls')),
     path('admin/', admin.site.urls),
     path('scraper/', include('Api.urls')),
     path('dataset/<path>/<scraper>/', DataSet.as_view()),
     path('validator/', include('validator.urls')),
-    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}, name='static'),
+    path('oauth/', include('social_django.urls', namespace='social')),
+    re_path(r'^auth/', include('drf_social_oauth2.urls', namespace='drf')),
+    re_path(r'^static/(?P<path>.*)$', serve,
+            {'document_root': settings.STATIC_ROOT}, name='static'),
 ]

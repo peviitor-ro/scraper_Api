@@ -22,53 +22,62 @@ def transform_data(data):
 class ScraperValidator(APIView):
     def post(self, request):
         jobs = request.data
-        posted_jobs = []
+        
+        if isinstance(jobs, list) and len(jobs) > 0:
+            posted_jobs = []
+            for job in jobs:
+                job_link = transform_data(job.get('job_link'))
+                job_title = transform_data(job.get('job_title'))
+                company = transform_data(job.get('company')).lower()
+                country = transform_data(job.get('country'))
+                city = transform_data(job.get('city'))
+                county = transform_data(job.get('county'))
+                remote = transform_data(job.get('remote'))
 
-        for job in jobs:
-            job_link = transform_data(job.get('job_link'))
-            job_title = transform_data(job.get('job_title'))
-            company = transform_data(job.get('company')).lower()
-            country = transform_data(job.get('country'))
-            city = transform_data(job.get('city'))
-            county = transform_data(job.get('county'))
-            remote = transform_data(job.get('remote'))
+                _company_serializer = CompanySerializer(
+                    data={'company': company})
 
-            _company_serializer = CompanySerializer(
-                data={'company': company})
+                if _company_serializer.is_valid(raise_exception=True):
+                    instance = _company_serializer.save()
+                    
+                    job_element = {
+                        'job_link': job_link,
+                        'job_title': job_title,
+                        'company': instance.id,
+                        'country': country,
+                        'city': city,
+                        'county': county,
+                        'remote': remote,
+                    }
 
-            if _company_serializer.is_valid():
-                instance = _company_serializer.save()
-                
-                job_element = {
-                    'job_link': job_link,
-                    'job_title': job_title,
-                    'company': instance.id,
-                    'country': country,
-                    'city': city,
-                    'county': county,
-                    'remote': remote,
-                }
+                    _job_serializer = JobAddSerializer(data=job_element)
 
-                _job_serializer = JobAddSerializer(data=job_element)
+                    if _job_serializer.is_valid(raise_exception=True):
+                        _job_serializer.save()
 
-                if _job_serializer.is_valid():
-                    _job_serializer.save()
-
-                    posted_jobs.append(_job_serializer.data)
+                        posted_jobs.append(_job_serializer.data)
+                    else:
+                        return Response(_job_serializer.errors)
+                else:
+                    return Response(_company_serializer.errors)
     
-        return Response(posted_jobs)
+            return Response(posted_jobs)
+        else:
+            return Response({'message': 'No jobs provided'}, status=400)
     
     @property
     def delete(self):
         scraper_data = self.request.data
-        company_obj = Company.objects.filter(company=transform_data(scraper_data[0].get('company').lower())).first()
-        database_jobs = Job.objects.filter(company=company_obj.id).values()
-        scraper_data = [transform_data(job.get('job_link')) for job in scraper_data]
-        database_jobs = [job.get('job_link') for job in database_jobs]
-        to_delete = [job for job in database_jobs if job not in scraper_data]
-        
-        for job in to_delete:
-            Job.objects.filter(job_link=job).delete()
+
+        if isinstance(scraper_data, list) and len(scraper_data) > 0:
+            company_obj = Company.objects.filter(company=transform_data(scraper_data[0].get('company').lower())).first()
+            database_jobs = Job.objects.filter(company=company_obj.id).values()
+            scraper_data = [transform_data(job.get('job_link')) for job in scraper_data]
+            database_jobs = [job.get('job_link') for job in database_jobs]
+            to_delete = [job for job in database_jobs if job not in scraper_data]
+            
+            for job in to_delete:
+                Job.objects.filter(job_link=job).delete()
     
 class GetCompanyData(APIView):
     def post(self, request):

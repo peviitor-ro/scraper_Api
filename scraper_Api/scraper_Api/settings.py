@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-nh-rh#j35y9n9o11$h@vto$^#5gr73f!0&wqml_1g!n_d(5%&g
 if platform.system() == 'Darwin' or platform.system() == 'windows':
     DEBUG = True
 else:
-    DEBUG = False
+    DEBUG = True
 
 APPEND_SLASH = False
 
@@ -58,6 +58,7 @@ CORS_ALLOWED_ORIGINS = (
     'https://scraper-ui.netlify.app',
     'https://scrapers.peviitor.ro',
     'https://api.laurentiumarian.ro',
+    'http://localhost:3000',
 )
 CORS_ALLOW_HEADERS = ('*')
 CORS_ALLOW_METHODS = ['GET', 'POST']

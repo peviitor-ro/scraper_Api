@@ -20,7 +20,7 @@ from django.conf import settings
 from Api.views import DataSetView as DataSet
 
 urlpatterns = [
-    path('', include('oauth.urls')),
+    path('', include(('oauth.urls', 'oauth'), namespace='oauth')),
     path('admin/', admin.site.urls),
     path('scraper/', include('Api.urls')),
     path('dataset/<path>/<scraper>/', DataSet.as_view()),

@@ -33,6 +33,7 @@ else:
 APPEND_SLASH = False
 
 ALLOWED_HOSTS = [
+    '127.0.0.1',
     'localhost',
     'dev.laurentiumarian.ro',
     'api.laurentiumarian.ro',
@@ -213,9 +214,13 @@ AUTHENTICATION_BACKENDS = (
 )
 
 LOGIN_URL = '/homepage/'
-LOGIN_REDIRECT_URL = 'http://127.0.0.1:5500/profile/index.html'
+LOGIN_REDIRECT_URL = 'oauth:login'
 LOGOUT_URL = '/logout'
-LOGOUT_REDIRECT_URL = 'http://localhost:5500/profile/index.html'
+LOGOUT_REDIRECT_URL = '/homepage/'
 
-SOCIAL_AUTH_GITHUB_KEY = 'c41a2e3f5b5c972a068c'
-SOCIAL_AUTH_GITHUB_SECRET = '479c50824f1e0c53eb24512859627e68cbbf270a'
+# SOCIAL_AUTH_GITHUB_KEY = 'c41a2e3f5b5c972a068c'
+# SOCIAL_AUTH_GITHUB_SECRET = '479c50824f1e0c53eb24512859627e68cbbf270a'
+
+
+SOCIAL_AUTH_GITHUB_KEY = '0b9196806bf773e4d68e'
+SOCIAL_AUTH_GITHUB_SECRET = '28a229ef1e0ca4eb094f388149203dc55d481e7d'

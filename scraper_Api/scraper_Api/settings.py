@@ -12,7 +12,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import os
-import platform
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,10 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-nh-rh#j35y9n9o11$h@vto$^#5gr73f!0&wqml_1g!n_d(5%&g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if platform.system() == 'Darwin' or platform.system() == 'windows':
-    DEBUG = True
-else:
-    DEBUG = True
+DEBUG = os.getenv('DEBUG')
 
 APPEND_SLASH = False
 
@@ -76,10 +74,8 @@ INSTALLED_APPS = [
 
     # Api
     'rest_framework',
+    'rest_framework_simplejwt',
     'rest_framework.authtoken',
-    'oauth2_provider',
-    'social_django',
-    'drf_social_oauth2',
 
     # Cors
     'corsheaders',
@@ -87,8 +83,41 @@ INSTALLED_APPS = [
     # Apps
     'Api',
     'validator',
+    'users',
 
 ]
+
+AUTH_USER_MODEL = 'users.CustomUser'
+
+from datetime import timedelta
+
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+}
 
 MIDDLEWARE = [
     # Cors
@@ -100,9 +129,6 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    
-    # Github
-    'social_django.middleware.SocialAuthExceptionMiddleware'
 ]
 
 ROOT_URLCONF = 'scraper_Api.urls'
@@ -120,10 +146,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-
-                # OAuth2
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -189,11 +211,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # OAUTH2
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # OAuth
-        'drf_social_oauth2.authentication.SocialAuthentication',
-
-        'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -201,17 +220,8 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    # Others auth providers (e.g. Facebook, OpenId, etc)
-
-    # GitHub OAuth2
-    'social_core.backends.github.GithubOAuth2',
-
     # Django
     'django.contrib.auth.backends.ModelBackend',
-
-    # DRF Social OAuth2
-    'drf_social_oauth2.backends.DjangoOAuth2',
-
 )
 
 LOGIN_URL = '/homepage/'
@@ -219,9 +229,9 @@ LOGIN_REDIRECT_URL = 'oauth:login'
 LOGOUT_URL = '/logout'
 LOGOUT_REDIRECT_URL = '/homepage/'
 
-SOCIAL_AUTH_GITHUB_KEY = 'c41a2e3f5b5c972a068c'
-SOCIAL_AUTH_GITHUB_SECRET = '479c50824f1e0c53eb24512859627e68cbbf270a'
-
-
-# SOCIAL_AUTH_GITHUB_KEY = '0b9196806bf773e4d68e'
-# SOCIAL_AUTH_GITHUB_SECRET = '28a229ef1e0ca4eb094f388149203dc55d481e7d'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')

@@ -80,10 +80,23 @@ class ScraperValidator(APIView):
                 Job.objects.filter(job_link=job).delete()
     
 class GetCompanyData(APIView):
+    def get(self, request):
+        user = request.user
+        user_companies = user.company.all()
+        serializer = CompanySerializer(user_companies, many=True)
+
+        return Response(serializer.data)
+
     def post(self, request):
         company = request.data.get('company')
+        user = request.user
+        user_companies = user.company.all()
+        print(
+            company,
+            user_companies.filter(company=company.title()).exists()
+        )
 
-        if company:
+        if company and user_companies.filter(company=company.title()).exists():
             company = get_object_or_404(Company, company=company.lower())
             jobs_objects = Job.objects.filter(company=company.id)
             serializer = GetJobSerializer(jobs_objects, many=True)

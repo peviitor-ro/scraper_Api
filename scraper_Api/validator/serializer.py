@@ -1,14 +1,21 @@
 from .models import Job, Company
 from rest_framework import serializers
 from django.db import transaction
+from users.models import CustomUser
 
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ['company']
+        fields = ['company', 'scname', 'website']
 
     def create(self, validated_data):
-        instance , _ = Company.objects.get_or_create(**validated_data)
+        instance , create = Company.objects.get_or_create(**validated_data)
+
+        if create:
+            superusers = CustomUser.objects.filter(is_superuser=True)
+            for user in superusers:
+                user.company.add(instance)
+                user.save()
         return instance
 
 class JobAddSerializer(serializers.ModelSerializer):

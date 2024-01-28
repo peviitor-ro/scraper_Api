@@ -26,28 +26,28 @@ class LoginRegisterView(APIView):
 
         # Send email
         subject = 'Authorization Link'
-        message = f'Here is your authorization link: http://localhost:3000/authorize/{refresh}'
+        message = f'Here is your authorization link: http://localhost:3000/authorize/{refresh.access_token}'
         email_from = 'test@test.com'
         recipient_list = [user.email, ]
         send_mail(subject, message, email_from, recipient_list)
-
-        response = {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }
-
-        return Response(response, headers={"Authorization": str(refresh.access_token)})
+        return Response(status=201)
     
 @permission_classes([AllowAny])
 class Authorized(APIView):
-    def post(self, request):
+    def ge(self, request):
         token = request.data.get('token')
         if token:
             try:
                 decoded_token = RefreshToken(token)
                 user_id = decoded_token.payload.get('user_id')
                 User.objects.get(pk=user_id)
-                return Response({'authorized': True})
+
+                response = {
+                    "refresh": str(decoded_token),
+                    "access": str(decoded_token.access_token),
+                    "authorized": True,
+                }
+                return Response(response)
             except Exception as e:
                 print(e)
                 return Response({'error': 'Invalid token'}, status=400)

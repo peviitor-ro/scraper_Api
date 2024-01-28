@@ -34,7 +34,7 @@ class LoginRegisterView(APIView):
     
 @permission_classes([AllowAny])
 class Authorized(APIView):
-    def ge(self, request):
+    def get(self, request):
         token = request.data.get('token')
         if token:
             try:

@@ -34,21 +34,21 @@ class LoginRegisterView(APIView):
     
 @permission_classes([AllowAny])
 class Authorized(APIView):
-    def get(self, request):
-        token = request.data.get('token')
-        if token:
-            try:
-                decoded_token = AccessToken(token)
-                user_id = decoded_token.payload.get('user_id')
-                user = User.objects.get(pk=user_id)
-                refresh_token = RefreshToken.for_user(user)
-                response = {
-                    "refresh": str(refresh_token),
-                    "access": str(decoded_token),
-                    "authorized": True,
-                }
-                return Response(response)
-            except Exception as e:
-                print(e)
-                return Response({'error': 'Invalid token'}, status=400)
-        return Response({'error': 'Token not found'}, status=400)
+    def get(self, request, token):
+        if not token:
+            return Response({'error': 'Token not found'}, status=400)
+        try:
+            decoded_token = AccessToken(token)
+            user_id = decoded_token.payload.get('user_id')
+            user = User.objects.get(pk=user_id)
+            refresh_token = RefreshToken.for_user(user)
+            response = {
+                "refresh": str(refresh_token),
+                "access": str(decoded_token),
+                "authorized": True,
+            }
+            return Response(response)
+        except Exception as e:
+            print(e)
+            return Response({'error': 'Invalid token'}, status=400)
+        

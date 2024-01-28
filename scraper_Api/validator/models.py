@@ -8,13 +8,6 @@ class Company(models.Model):
 
     def __str__(self):
         return self.company
-    
-# class Logo(models.Model):
-#     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='CompanyLogo')
-#     logo = models.ImageField(upload_to='logos/', blank=True)
-
-#     def __str__(self):
-#         return self.company.company
 
 class Job(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='Company')

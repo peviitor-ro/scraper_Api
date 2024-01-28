@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
 from .serializer import UserSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 
@@ -38,13 +38,13 @@ class Authorized(APIView):
         token = request.data.get('token')
         if token:
             try:
-                decoded_token = RefreshToken(token)
+                decoded_token = AccessToken(token)
                 user_id = decoded_token.payload.get('user_id')
-                User.objects.get(pk=user_id)
-
+                user = User.objects.get(pk=user_id)
+                refresh_token = RefreshToken.for_user(user)
                 response = {
-                    "refresh": str(decoded_token),
-                    "access": str(decoded_token.access_token),
+                    "refresh": str(refresh_token),
+                    "access": str(decoded_token),
                     "authorized": True,
                 }
                 return Response(response)

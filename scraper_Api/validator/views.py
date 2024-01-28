@@ -28,7 +28,7 @@ class ScraperValidator(APIView):
             for job in jobs:
                 job_link = transform_data(job.get('job_link'))
                 job_title = transform_data(job.get('job_title'))
-                company = transform_data(job.get('company')).lower()
+                company = transform_data(job.get('company')).title()
                 country = transform_data(job.get('country'))
                 city = transform_data(job.get('city'))
                 county = transform_data(job.get('county'))
@@ -70,7 +70,7 @@ class ScraperValidator(APIView):
         scraper_data = self.request.data
 
         if isinstance(scraper_data, list) and len(scraper_data) > 0:
-            company_obj = Company.objects.filter(company=transform_data(scraper_data[0].get('company').lower())).first()
+            company_obj = Company.objects.filter(company=transform_data(scraper_data[0].get('company').title())).first()
             database_jobs = Job.objects.filter(company=company_obj.id).values()
             scraper_data = [transform_data(job.get('job_link')) for job in scraper_data]
             database_jobs = [job.get('job_link') for job in database_jobs]
@@ -91,13 +91,9 @@ class GetCompanyData(APIView):
         company = request.data.get('company')
         user = request.user
         user_companies = user.company.all()
-        print(
-            company,
-            user_companies.filter(company=company.title()).exists()
-        )
 
-        if company and user_companies.filter(company=company.title()).exists():
-            company = get_object_or_404(Company, company=company.lower())
+        if user_companies.filter(company=company.title()).exists():
+            company = get_object_or_404(Company, company=company.title())
             jobs_objects = Job.objects.filter(company=company.id)
             serializer = GetJobSerializer(jobs_objects, many=True)
 
@@ -115,7 +111,7 @@ class GetCompanyData(APIView):
 
             return Response(jobs)
         else:
-            return Response({'message': 'No company name provided'})
+            return Response({'message': 'Unauthorized'}, status=401)
         
 class EditJob(APIView):
     def post(self, request):

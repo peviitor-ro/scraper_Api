@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
-from .serializer import UserSerializer
+from .serializer import UserSerializer, UserUpdateSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
@@ -51,4 +51,16 @@ class Authorized(APIView):
         except Exception as e:
             print(e)
             return Response({'error': 'Invalid token'}, status=400)
+        
+class UpdateUser(APIView):
+    def post(self, request):
+        if not request.user.is_superuser:
+            return Response({'error': 'Not authenticated'}, status=401)
+        serializer = UserUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        response = serializer.update(request.data)
+
+        return response
+
+
         

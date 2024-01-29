@@ -47,10 +47,10 @@ class ScraperValidator(APIView):
                         'country': country,
                         'city': city,
                         'county': county,
-                        'remote': remote,
+                        'remote': remote
                     }
 
-                    _job_serializer = JobAddSerializer(data=job_element)
+                    _job_serializer = JobAddSerializer(data=job_element, context={'request': request})
 
                     if _job_serializer.is_valid(raise_exception=True):
                         _job_serializer.save()

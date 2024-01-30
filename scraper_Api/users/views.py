@@ -51,6 +51,24 @@ class Authorized(APIView):
         except Exception as e:
             print(e)
             return Response({'error': 'Invalid token'}, status=400)
+
+@permission_classes([AllowAny])
+class RefreshTokenView(APIView):
+    def post(self, request):
+        token = request.data.get('token')
+        if not token:
+            return Response({'error': 'Token not found'}, status=400)
+        try:
+            decoded_token = RefreshToken(token)
+            user_id = decoded_token.payload.get('user_id')
+            User.objects.get(pk=user_id)
+
+            response = {
+                "access": str(decoded_token.access_token),
+            }
+            return Response(response)
+        except Exception as e:
+            return Response({'error': 'Invalid token'}, status=400)
         
 class UpdateUser(APIView):
     def post(self, request):

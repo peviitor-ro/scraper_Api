@@ -4,5 +4,6 @@ from . import views
 urlpatterns = [
     path('', views.LoginRegisterView.as_view()),
     path('update', views.UpdateUser.as_view()),
+    path('refresh', views.RefreshTokenView.as_view()),
     path('authorized/<str:token>', views.Authorized.as_view()),
 ]

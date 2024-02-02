@@ -26,7 +26,7 @@ class LoginRegisterView(APIView):
     
     def send_authorization_mail(self, user, token):
         subject = 'Authorization Link'
-        message = f'Here is your authorization link: http://localhost:3000/authorize/{refresh.access_token}'
+        message = f'Here is your authorization link: http://localhost:3000/authorize/{token}'
         email_from = 'test@test.com'
         recipient_list = [user.email, ]
         send_mail(subject, message, email_from, recipient_list)

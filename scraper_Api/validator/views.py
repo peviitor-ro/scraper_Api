@@ -9,70 +9,85 @@ from .models import Job, Company
 from django.shortcuts import get_object_or_404
 
 JOB_NOT_FOUND = {'message': 'Job not found'}
-
-def transform_data(data):
-    if isinstance(data, str):
-        return data
-    elif isinstance(data, list):
-        data_string = ",".join(data)
-        return data_string
-    else:
-        return ""
-
-class ScraperValidator(APIView):
-    def post(self, request):
-        jobs = request.data
-        
-        if isinstance(jobs, list) and len(jobs) > 0:
-            posted_jobs = []
-            for job in jobs:
-                job_link = transform_data(job.get('job_link'))
-                job_title = transform_data(job.get('job_title'))
-                company = transform_data(job.get('company')).title()
-                country = transform_data(job.get('country'))
-                city = transform_data(job.get('city'))
-                county = transform_data(job.get('county'))
-                remote = transform_data(job.get('remote'))
-
-                _company_serializer = CompanySerializer(
-                    data={'company': company})
-
-                if _company_serializer.is_valid(raise_exception=True):
-                    instance = _company_serializer.save()
-                    
-                    job_element = {
-                        'job_link': job_link,
-                        'job_title': job_title,
-                        'company': instance.id,
-                        'country': country,
-                        'city': city,
-                        'county': county,
-                        'remote': remote
-                    }
-
-                    _job_serializer = JobAddSerializer(data=job_element, context={'request': request})
-
-                    if _job_serializer.is_valid(raise_exception=True):
-                        _job_serializer.save()
-
-                        posted_jobs.append(_job_serializer.data)
-                    else:
-                        return Response(_job_serializer.errors)
-                else:
-                    return Response(_company_serializer.errors)
     
-            return Response(posted_jobs)
+class JobView(object):
+    def update(self, jobs, attribute):
+        if isinstance(jobs, list) and len(jobs) > 0 and hasattr(Job, attribute):
+            for job in jobs:
+                job_link = self.transform_data(job.get('job_link'))
+                job_obj = Job.objects.get(job_link=job_link)
+
+                if not job_obj:
+                    return Response(JOB_NOT_FOUND)
+                
+                setattr(job_obj, attribute, not getattr(job_obj, attribute))
+                job_obj.save()
+
+            return Response({'message': f'Job {attribute}'})
         else:
-            return Response({'message': 'No jobs provided'}, status=400)
+            return Response(status=400)
+
+    def transformed_jobs(self,jobs):
+        data = []
+        if isinstance(jobs, list) and len(jobs) > 0:
+            for job in jobs:
+                job_obj = {
+                    "job_link": self.transform_data(job.get('job_link')),
+                    "job_title": self.transform_data(job.get('job_title')),
+                    "country": self.transform_data(job.get('country')),
+                    "city": self.transform_data(job.get('city')),
+                    "county": self.transform_data(job.get('county')),
+                    "remote": self.transform_data(job.get('remote')),
+                    "company":self.transform_data(job.get('company')).title()
+                }
+                data.append(job_obj)
+        return data
+
+    def transform_data(self, data):
+        if isinstance(data, str):
+            return data
+        elif isinstance(data, list):
+            data_string = ",".join(data)
+            return data_string
+        else:
+            return ""
+    
+class ScraperValidator(APIView, JobView):
+    def post(self, request):
+        jobs = self.transformed_jobs(request.data)
+
+        if not jobs:
+            return Response(status=400)
+        posted_jobs = []
+        for job in jobs:
+            company = self.transform_data(job.get('company')).title()
+
+            company_serializer = CompanySerializer(
+                data={'company': company})
+
+            company_serializer.is_valid(raise_exception=True)
+            instance = company_serializer.save()
+                
+            job['company'] = instance.id
+
+            job_serializer = JobAddSerializer(data=job, context={'request': request})
+
+            job_serializer.is_valid(raise_exception=True)
+            job_serializer.save()
+
+            posted_jobs.append(job_serializer.data)
+
+        return Response(posted_jobs)
+
     
     @property
     def delete(self):
         scraper_data = self.request.data
-
-        if isinstance(scraper_data, list) and len(scraper_data) > 0:
-            company_obj = Company.objects.filter(company=transform_data(scraper_data[0].get('company').title())).first()
+        
+        if isinstance(scraper_data, list) and len(scraper_data) > 0: 
+            company_obj = Company.objects.filter(company=self.transform_data(scraper_data[0].get('company'))).first()
             database_jobs = Job.objects.filter(company=company_obj.id).values()
-            scraper_data = [transform_data(job.get('job_link')) for job in scraper_data]
+            scraper_data = [self.transform_data(job.get('job_link')) for job in scraper_data]
             database_jobs = [job.get('job_link') for job in database_jobs]
             to_delete = [job for job in database_jobs if job not in scraper_data]
             
@@ -111,59 +126,30 @@ class GetCompanyData(APIView):
 
             return Response(jobs)
         else:
-            return Response({'message': 'Unauthorized'}, status=401)
+            return Response(status=401)
         
-class EditJob(APIView):
+class EditJob(APIView, JobView):
     def post(self, request):
-        jobs = request.data
+        jobs = self.transformed_jobs(request.data)
+
         for job in jobs:
-            job_link = transform_data(job.get('job_link'))
-            job_title = transform_data(job.get('job_title'))
-            country = transform_data(job.get('country'))
-            city = transform_data(job.get('city'))
-            county = transform_data(job.get('county'))
-            remote = transform_data(job.get('remote'))
+            company = get_object_or_404(Company, company=self.transform_data(job.get('company')).title())
+            job['company'] = company.id
             
-            job_obj = Job.objects.get(job_link=job_link)
-            if job_obj:      
-                job_obj.job_title = job_title
-                job_obj.country = country
-                job_obj.city = city
-                job_obj.county = county
-                job_obj.remote = remote
-                job_obj.edited = True
-                job_obj.save()
-            else:
-                return Response(JOB_NOT_FOUND)
+            serializer = JobAddSerializer(data=job, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
         return Response({'message': 'Job edited'})
     
-class DeleteJob(APIView):
+class DeleteJob(APIView, JobView):
     def post(self, request):
-        jobs = request.data
-        for job in jobs:
-            job_link = transform_data(job.get('job_link'))
-            job_obj = Job.objects.get(job_link=job_link)
-            if job_obj:
-                job_obj.deleted = not job_obj.deleted
-                job_obj.save()
-            else:
-                return Response(JOB_NOT_FOUND)
-        
-        return Response({'message': 'Job deleted'})
+        response = self.update(request.data, 'deleted')
+        return response
 
-class PublishJob(APIView):
+class PublishJob(APIView, JobView):
     def post(self, request):
-        jobs = request.data
-        for job in jobs:
-            job_link = transform_data(job.get('job_link'))
-            job_obj = Job.objects.get(job_link=job_link)
-            if job_obj:
-                job_obj.published = not job_obj.published
-                job_obj.save()
-            else:
-                return Response(JOB_NOT_FOUND)
-        
-        return Response({'message': 'Job published'})
+        response = self.update(request.data, 'published')
+        return response
         
     

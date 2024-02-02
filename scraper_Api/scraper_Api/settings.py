@@ -27,7 +27,6 @@ SECRET_KEY = 'django-insecure-nh-rh#j35y9n9o11$h@vto$^#5gr73f!0&wqml_1g!n_d(5%&g
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG')
-
 APPEND_SLASH = False
 
 ALLOWED_HOSTS = [
@@ -75,13 +74,12 @@ INSTALLED_APPS = [
     # Api
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework.authtoken',
 
     # Cors
     'corsheaders',
 
     # Apps
-    'Api',
+    'scraper',
     'validator',
     'users',
 
@@ -94,7 +92,7 @@ from datetime import timedelta
 # TODO: Change expiration time
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=10),
     "REFRESH_TOKEN_LIFETIME": timedelta(minutes=10),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,

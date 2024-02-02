@@ -7,36 +7,36 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 
-
 User = get_user_model()
-
 
 @permission_classes([AllowAny])
 class LoginRegisterView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
-
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user = serializer.save()
 
         refresh = RefreshToken.for_user(user)
+        self.send_authorization_mail(user, refresh.access_token)
 
-        # Send email
+        return Response(status=201)
+    
+    def send_authorization_mail(self, user, token):
         subject = 'Authorization Link'
         message = f'Here is your authorization link: http://localhost:3000/authorize/{refresh.access_token}'
         email_from = 'test@test.com'
         recipient_list = [user.email, ]
         send_mail(subject, message, email_from, recipient_list)
-        return Response(status=201)
     
 @permission_classes([AllowAny])
 class Authorized(APIView):
-    def get(self, request, token):
+    def get(self, _, token):
         if not token:
-            return Response({'error': 'Token not found'}, status=400)
+            return Response(status=400)
+        
         try:
             decoded_token = AccessToken(token)
             user_id = decoded_token.payload.get('user_id')
@@ -48,16 +48,16 @@ class Authorized(APIView):
                 "authorized": True,
             }
             return Response(response)
-        except Exception as e:
-            print(e)
-            return Response({'error': 'Invalid token'}, status=400)
+        except Exception:
+            return Response(status=400)
 
 @permission_classes([AllowAny])
 class RefreshTokenView(APIView):
     def post(self, request):
         token = request.data.get('token')
         if not token:
-            return Response({'error': 'Token not found'}, status=400)
+            return Response(status=400)
+        
         try:
             decoded_token = RefreshToken(token)
             user_id = decoded_token.payload.get('user_id')
@@ -67,13 +67,14 @@ class RefreshTokenView(APIView):
                 "access": str(decoded_token.access_token),
             }
             return Response(response)
-        except Exception as e:
-            return Response({'error': 'Invalid token'}, status=400)
+        except Exception:
+            return Response(status=400)
         
 class UpdateUser(APIView):
     def post(self, request):
         if not request.user.is_superuser:
-            return Response({'error': 'Not authenticated'}, status=401)
+            return Response(status=401)
+        
         serializer = UserUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         response = serializer.update(request.data)

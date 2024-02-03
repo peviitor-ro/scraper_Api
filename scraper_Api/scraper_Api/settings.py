@@ -80,7 +80,7 @@ INSTALLED_APPS = [
 
     # Apps
     'scraper',
-    'validator',
+    'jobs',
     'users',
 
 ]

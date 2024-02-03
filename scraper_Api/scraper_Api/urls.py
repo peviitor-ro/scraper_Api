@@ -24,7 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('scraper/', include('scraper.urls')),
     path('dataset/<path>/<scraper>/', DataSet.as_view()),
-    path('validator/', include('validator.urls')),
+    path('jobs/', include('jobs.urls')),
     re_path(r'^static/(?P<path>.*)$', serve,
             {'document_root': settings.STATIC_ROOT}, name='static'),
 ]

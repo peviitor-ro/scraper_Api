@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from .models import CustomUser
-from validator.models import Company
+from jobs.models import Company
 from rest_framework.response import Response
-
 
 class UserSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)

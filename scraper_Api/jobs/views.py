@@ -52,7 +52,7 @@ class JobView(object):
         else:
             return ""
     
-class ScraperValidator(APIView, JobView):
+class AddScraperJobs(APIView, JobView):
     def post(self, request):
         jobs = self.transformed_jobs(request.data)
 

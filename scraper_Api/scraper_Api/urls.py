@@ -21,10 +21,10 @@ from scraper.views import DataSetView as DataSet
 
 urlpatterns = [
     path('', include('users.urls')),
+    path('', include('jobs.urls')),
     path('admin/', admin.site.urls),
     path('scraper/', include('scraper.urls')),
     path('dataset/<path>/<scraper>/', DataSet.as_view()),
-    path('jobs/', include('jobs.urls')),
     re_path(r'^static/(?P<path>.*)$', serve,
             {'document_root': settings.STATIC_ROOT}, name='static'),
 ]

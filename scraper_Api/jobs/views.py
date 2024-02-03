@@ -47,7 +47,9 @@ class JobView(object):
         if isinstance(data, str):
             return data
         elif isinstance(data, list):
-            data_string = ",".join(data)
+            data_string = ",".join(
+                [str(item).strip() for item in data if isinstance(item, str)]
+            )
             return data_string
         else:
             return ""

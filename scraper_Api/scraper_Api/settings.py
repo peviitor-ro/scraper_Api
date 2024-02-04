@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
+from datetime import timedelta
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -87,8 +87,8 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
-from datetime import timedelta
 
+# JWT
 # TODO: Change expiration time
 
 SIMPLE_JWT = {
@@ -209,7 +209,7 @@ STATICFILES_DIRS = (os.path.join('static/'), )
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# OAUTH2
+# Rest Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',

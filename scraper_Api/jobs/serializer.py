@@ -33,7 +33,6 @@ class JobAddSerializer(serializers.ModelSerializer):
         model = Job
         fields = ['job_link', 'job_title', 'company', 'country', 'city', 'county', 'remote', 'job_id', 'company_name']
         
-
     def create(self, validated_data):
         try:
             with transaction.atomic():

@@ -1,5 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from .pagination import CustomPagination
 from .serializer import (
     JobAddSerializer, 
     CompanySerializer,
@@ -97,12 +99,16 @@ class AddScraperJobs(APIView, JobView):
                 Job.objects.filter(job_link=job).delete()
     
 class GetCompanyData(APIView):
+    serializer_class = CompanySerializer
+    pagination_class = CustomPagination
+
     def get(self, request):
         user = request.user
-        user_companies = user.company.all()
-        serializer = CompanySerializer(user_companies, many=True)
-
-        return Response(serializer.data)
+        queryset = user.company.all()
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = self.serializer_class(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         company = request.data.get('company')
@@ -112,7 +118,7 @@ class GetCompanyData(APIView):
         if user_companies.filter(company=company.title()).exists():
             company = get_object_or_404(Company, company=company.title())
             jobs_objects = Job.objects.filter(company=company.id)
-            serializer = GetJobSerializer(jobs_objects, many=True)
+            serializer = self.serializer_class(jobs_objects, many=True)
 
             jobs = []
             for job in serializer.data:

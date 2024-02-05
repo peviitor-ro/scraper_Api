@@ -110,6 +110,9 @@ class GetCompanyData(APIView):
         serializer = self.serializer_class(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+class GetJobData(APIView):
+    serializer_class = GetJobSerializer
+    pagination_class = CustomPagination
     def post(self, request):
         company = request.data.get('company')
         user = request.user
@@ -117,8 +120,10 @@ class GetCompanyData(APIView):
 
         if user_companies.filter(company=company.title()).exists():
             company = get_object_or_404(Company, company=company.title())
-            jobs_objects = Job.objects.filter(company=company.id)
-            serializer = self.serializer_class(jobs_objects, many=True)
+            queryset = Job.objects.filter(company=company.id)
+            paginator = self.pagination_class()
+            result_page = paginator.paginate_queryset(queryset, request)
+            serializer = self.serializer_class(result_page, many=True)
 
             jobs = []
             for job in serializer.data:
@@ -128,11 +133,9 @@ class GetCompanyData(APIView):
                 job['city'] = job['city'].split(',')
                 job['county'] = job['county'].split(',')
 
-                del job['company_name']
-
                 jobs.append(job)
 
-            return Response(jobs)
+            return paginator.get_paginated_response(jobs)
         else:
             return Response(status=401)
         

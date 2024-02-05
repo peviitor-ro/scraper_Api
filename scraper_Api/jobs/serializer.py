@@ -21,9 +21,10 @@ class CompanySerializer(serializers.ModelSerializer):
         return instance
     
     def get_logo(self, obj):
-        logo = requests.get(f'https://logo.clearbit.com/{obj.website}')
-        if logo.status_code == 200:
-            return logo.url
+        pass
+        # logo = requests.get(f'https://logo.clearbit.com/{obj.website}')
+        # if logo.status_code == 200:
+        #     return logo.url
 
 class JobAddSerializer(serializers.ModelSerializer):
     job_id = serializers.SerializerMethodField()

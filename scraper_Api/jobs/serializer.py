@@ -2,13 +2,14 @@ from .models import Job, Company
 from rest_framework import serializers
 from django.db import transaction
 from users.models import CustomUser
-import requests
+
 
 class CompanySerializer(serializers.ModelSerializer):
+    jobsCount = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
     class Meta:
         model = Company
-        fields = ['company', 'scname', 'website', 'logo']
+        fields = ['company', 'scname', 'website', 'description','logo', 'jobsCount']
 
     def create(self, validated_data):
         instance , create = Company.objects.get_or_create(**validated_data)
@@ -20,11 +21,13 @@ class CompanySerializer(serializers.ModelSerializer):
                 user.save()
         return instance
     
+    def get_jobsCount(self, obj):
+        total_jobs = Job.objects.filter(company=obj.id).count()
+        return total_jobs
+    
     def get_logo(self, obj):
         pass
-        # logo = requests.get(f'https://logo.clearbit.com/{obj.website}')
-        # if logo.status_code == 200:
-        #     return logo.url
+
 
 class JobAddSerializer(serializers.ModelSerializer):
     job_id = serializers.SerializerMethodField()

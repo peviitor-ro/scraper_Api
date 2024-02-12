@@ -1,3 +1,6 @@
+from django.contrib.postgres.search import SearchVector
+from django.db.models import Case, F, IntegerField, Q, Value, When
+from django.db.models.functions import Length
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -112,12 +115,22 @@ class GetCompanyData(APIView):
         user = request.user
 
         order_query = request.GET.get("order", "name_asc")
+        order_by = COMPANY_SORT_OPTIONS.get(order_query)
+
+        search_query = request.GET.get("search")
 
         if not order_query:
             order_query = "name_asc"
 
+        if not search_query:
+            search_query = ""
+
         queryset = (
-            user.company.all().order_by(COMPANY_SORT_OPTIONS.get(order_query)).values()
+            user.company.filter(
+                Q(company__icontains=search_query) | Q(scname__icontains=search_query)
+            )
+            .order_by(order_by)
+            .values()
         )
 
         paginator = self.pagination_class()

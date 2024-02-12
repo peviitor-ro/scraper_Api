@@ -111,13 +111,13 @@ class GetCompanyData(APIView):
     def get(self, request):
         user = request.user
 
-        sortOrder = request.GET.get("order", "name_asc")
+        order_query = request.GET.get("order", "name_asc")
 
-        if not sortOrder:
-            sortOrder = "name_asc"
+        if not order_query:
+            order_query = "name_asc"
 
         queryset = (
-            user.company.all().order_by(COMPANY_SORT_OPTIONS.get(sortOrder)).values()
+            user.company.all().order_by(COMPANY_SORT_OPTIONS.get(order_query)).values()
         )
 
         paginator = self.pagination_class()

@@ -1,6 +1,4 @@
 from django.contrib import admin
-from .models import Scraper, TestLogs, DataSet
+from .models import Scraper
 
 admin.site.register(Scraper)
-admin.site.register(TestLogs)
-admin.site.register(DataSet)

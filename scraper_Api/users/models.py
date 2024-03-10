@@ -5,7 +5,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .managers import CustomUserManager
-from jobs.models import Company
+from company.models import Company
+from scraper.models import Scraper
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_("email address"), unique=True)
@@ -14,6 +15,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
     company = models.ManyToManyField(Company, related_name='Companies', blank=True)
+    scraper = models.ManyToManyField(Scraper, related_name='Scrapers', blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

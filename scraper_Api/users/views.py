@@ -81,5 +81,24 @@ class UpdateUser(APIView):
 
         return response
 
+class UserDetails(APIView):
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+    
+    def delete(self, request):
+        user = request.user
+        user.delete()
+        return Response(status=200)
+    
+    def put(self, request):
+        user = request.user
+        serializer = UserUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        response = serializer.update(request.data, user)
+
+        return response
+
 
         

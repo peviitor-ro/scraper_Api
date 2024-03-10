@@ -17,14 +17,14 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.static import serve
 from django.conf import settings
-from scraper.views import DataSetView as DataSet
 
 urlpatterns = [
     path('', include('users.urls')),
-    path('', include('jobs.urls')),
+    path('companies/', include('company.urls')),
+    path('jobs/', include('jobs.urls')),
     path('admin/', admin.site.urls),
     path('scraper/', include('scraper.urls')),
-    path('dataset/<path>/<scraper>/', DataSet.as_view()),
+    path('orase/', include('orase.urls')),
     re_path(r'^static/(?P<path>.*)$', serve,
             {'document_root': settings.STATIC_ROOT}, name='static'),
 ]

@@ -40,7 +40,6 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'https://dev.laurentiumarian.ro',
     'https://api.laurentiumarian.ro',
-
 ]
 
 # Default Timeout
@@ -80,9 +79,10 @@ INSTALLED_APPS = [
 
     # Apps
     'scraper',
+    'company',
     'jobs',
     'users',
-
+    'orase',
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'

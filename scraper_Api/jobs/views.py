@@ -1,18 +1,21 @@
-from django.contrib.postgres.search import SearchVector
-from django.db.models import Case, F, IntegerField, Q, Value, When
-from django.db.models.functions import Length
+
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from datetime import datetime
 
-from .constants import COMPANY_SORT_OPTIONS
-from .models import Company, Job
-from .pagination import CustomPagination
+from .constants import JOB_SORT_OPTIONS
+
+from .models import Job
+from company.models import Company, DataSet
+from utils.pagination import CustomPagination
 from .serializer import (
-    CompanySerializer,
     GetJobSerializer,
     JobAddSerializer,
+    JobAEditSerializer,
 )
+
+from company.serializers import CompanySerializer
 
 JOB_NOT_FOUND = {"message": "Job not found"}
 
@@ -68,14 +71,19 @@ class AddScraperJobs(APIView, JobView):
 
         if not jobs:
             return Response(status=400)
+        
         posted_jobs = []
+
         for job in jobs:
             company = self.transform_data(job.get("company")).title()
 
-            company_serializer = CompanySerializer(data={"company": company})
+            company_serializer = CompanySerializer(data={"company": company},)
 
             company_serializer.is_valid(raise_exception=True)
             instance = company_serializer.save()
+
+            user = request.user
+            user.company.add(instance)
 
             job["company"] = instance.id
 
@@ -86,7 +94,13 @@ class AddScraperJobs(APIView, JobView):
 
             posted_jobs.append(job_serializer.data)
 
+        current_date = datetime.now()
+        DataSet.objects.update_or_create(
+            company=instance, date=current_date, defaults={"data": len(posted_jobs)}
+        )
+
         return Response(posted_jobs)
+
 
     @property
     def delete(self):
@@ -107,44 +121,41 @@ class AddScraperJobs(APIView, JobView):
                 Job.objects.filter(job_link=job).delete()
 
 
-class GetCompanyData(APIView):
-    serializer_class = CompanySerializer
-    pagination_class = CustomPagination
-
-    def get(self, request):
-        user = request.user
-
-        order_query = request.GET.get("order", "name_asc")
-        order_by = COMPANY_SORT_OPTIONS.get(order_query)
-
-        search_query = request.GET.get("search")
-
-        if not order_query:
-            order_query = "name_asc"
-
-        if not search_query:
-            search_query = ""
-
-        queryset = (
-            user.company.filter(
-                Q(company__icontains=search_query) | Q(scname__icontains=search_query)
-            )
-            .order_by(order_by)
-            .values()
-        )
-
-        paginator = self.pagination_class()
-
-        result_page = paginator.paginate_queryset(queryset, request)
-
-        serializer = self.serializer_class(result_page, many=True)
-
-        return paginator.get_paginated_response(serializer.data)
 
 
 class GetJobData(APIView):
     serializer_class = GetJobSerializer
     pagination_class = CustomPagination
+
+    def get(self, request):
+        company = request.GET.get("company",)
+        search = request.GET.get("search") or ""
+        order_query = request.GET.get("order") or "all"
+        order_by = JOB_SORT_OPTIONS.get(order_query)
+        user = request.user
+        user_companies = user.company.all()
+
+        if user_companies.filter(company=company.title()).exists():
+            company = get_object_or_404(Company, company=company.title())
+            queryset = Job.objects.filter(
+            company=company.id , job_title__icontains=search
+            ).order_by(order_by)
+            paginator = self.pagination_class()
+            result_page = paginator.paginate_queryset(queryset, request)
+            serializer = self.serializer_class(result_page, many=True)
+
+            jobs = []
+            for job in serializer.data:
+                job["company"] = company.company
+                job["country"] = [] if not job["country"] else job["country"].split(",")
+                job["city"] = [] if not job["city"] else job["city"].split(",")
+                job["county"] = [] if not job["county"] else job["county"].split(",")
+
+                jobs.append(job)
+
+            return paginator.get_paginated_response(jobs)
+        else:
+            return Response(status=401)
 
     def post(self, request):
         company = request.data.get("company")
@@ -175,24 +186,44 @@ class GetJobData(APIView):
 class EditJob(APIView, JobView):
     def post(self, request):
         jobs = self.transformed_jobs(request.data)
-
         for job in jobs:
-            company = get_object_or_404(
-                Company, company=self.transform_data(job.get("company")).title()
-            )
-            job["company"] = company.id
+            try:
+                company = request.user.company.get(company=self.transform_data(job.get("company")).title())
+                job["company"] = company.id
+                
+                serializer = JobAEditSerializer(
+                    data=job, context={"request": request})
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
 
-            serializer = JobAddSerializer(data=job, context={"request": request})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            except Exception:
+                return Response(status=404)
 
         return Response({"message": "Job edited"})
 
 
 class DeleteJob(APIView, JobView):
     def post(self, request):
-        response = self.update(request.data, "deleted")
-        return response
+        jobs = self.transformed_jobs(request.data)
+
+        if not jobs:
+            return Response(status=400)
+        
+        for job in jobs:
+            try:
+                company = request.user.company.get(company=self.transform_data(job.get("company")).title())
+                job_link = self.transform_data(job.get("job_link"))
+                job_obj = Job.objects.get(job_link=job_link, company=company)
+
+                if not job_obj:
+                    return Response(JOB_NOT_FOUND)
+
+                job_obj.delete()
+            except Exception:
+                return Response(status=404)
+            
+        return Response({"message": "Job deleted"})
+
 
 
 class PublishJob(APIView, JobView):

@@ -1,1 +1,0 @@
-SCRAPER_PATH = 'scrapers'

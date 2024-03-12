@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
+
 from .serializer import UserSerializer, UserUpdateSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.contrib.auth import get_user_model
@@ -51,6 +52,22 @@ class Authorized(APIView):
         except Exception:
             return Response(status=400)
 
+@permission_classes([AllowAny])    
+class GetToken(APIView):  
+    def post(self, request, ):
+        try:
+            email = request.data.get('email')
+            user = User.objects.get(email=email)
+            refresh = RefreshToken.for_user(user)
+            response = {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
+            return Response(response)
+        
+        except Exception:
+            return Response(status=400)
+
 @permission_classes([AllowAny])
 class RefreshTokenView(APIView):
     def post(self, request):
@@ -81,6 +98,7 @@ class UpdateUser(APIView):
 
         return response
 
+#TODO: Add permission to this view
 class UserDetails(APIView):
     def get(self, request):
         user = request.user

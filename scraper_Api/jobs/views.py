@@ -98,7 +98,6 @@ class AddScraperJobs(APIView, JobView):
         DataSet.objects.update_or_create(
             company=instance, date=current_date, defaults={"data": len(posted_jobs)}
         )
-
         return Response(posted_jobs)
 
 

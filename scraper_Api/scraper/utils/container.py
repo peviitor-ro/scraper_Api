@@ -54,7 +54,7 @@ class Container(object):
         images = {
             'python': 'python:3.9',
             'node': 'node:latest',
-            'jmeter': 'justb4/jmeter:latest'
+            'jmeter': 'jmeter:latest'
         }
         try:
             container_config = {

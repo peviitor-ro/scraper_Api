@@ -1,5 +1,5 @@
-FROM python:3.9
-FROM node:14
+# FROM python:3.9
+# FROM node:14
 FROM openjdk:8-jdk-alpine
 
 RUN apk --no-cache add git

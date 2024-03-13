@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
+from django.template.loader import render_to_string
 
 from .serializer import UserSerializer, UserUpdateSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
@@ -26,11 +27,25 @@ class LoginRegisterView(APIView):
         return Response(status=201)
     
     def send_authorization_mail(self, user, token):
+        template = 'email.html'
+
+        context = {
+            'user': user,
+            'token': token,
+            'link': f'http://localhost:3000/authorize/{token}',
+        }
+
         subject = 'Authorization Link'
-        message = f'Here is your authorization link: http://localhost:3000/authorize/{token}'
-        email_from = 'test@test.com'
+        message = render_to_string(template, context)
+        email_from = 'aocpeviitor@gmail.com'
         recipient_list = [user.email, ]
-        send_mail(subject, message, email_from, recipient_list)
+        send_mail(
+            subject=subject,
+            message="",
+            from_email=email_from,
+            recipient_list=recipient_list,
+            html_message=message,
+        )
     
 @permission_classes([AllowAny])
 class Authorized(APIView):

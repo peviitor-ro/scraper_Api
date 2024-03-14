@@ -3,6 +3,11 @@ from django.db import models
 from company.models import Company
 import pysolr
 import datetime
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 class Job(models.Model):
@@ -31,7 +36,7 @@ class Job(models.Model):
         if self.published:
             self.date = datetime.datetime.now()
         super(Job, self).save(*args, **kwargs)
-        solr = pysolr.Solr('http://zimbor.go.ro/solr/shaqodoon')
+        solr = pysolr.Solr(DATABASE_URL)
 
         if self.published:
             #for testing purposes
@@ -53,7 +58,7 @@ class Job(models.Model):
             solr.commit()
 
     def delete(self, *args, **kwargs):
-        solr = pysolr.Solr('http://zimbor.go.ro/solr/shaqodoon')
+        solr = pysolr.Solr(DATABASE_URL)
         q = f'job_link:"{self.job_link}"'
         solr.delete(q=q)
         solr.commit()

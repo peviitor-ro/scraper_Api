@@ -54,8 +54,7 @@ class ScraperAddView(GenerivView):
             request.user.scraper.add(scraper_query.id)
             return Response(response)
 
-        except Exception as e:
-            print(e)
+        except Exception:
             return Response(status=400)
 
 

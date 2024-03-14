@@ -8,8 +8,11 @@ from .serializer import UserSerializer, UserUpdateSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from dotenv import load_dotenv
+import os
 
 User = get_user_model()
+load_dotenv()
 
 @permission_classes([AllowAny])
 class LoginRegisterView(APIView):
@@ -28,11 +31,12 @@ class LoginRegisterView(APIView):
     
     def send_authorization_mail(self, user, token):
         template = 'email.html'
+        url = os.getenv('FRONTEND_URL')
 
         context = {
             'user': user,
             'token': token,
-            'link': f'http://localhost:3000/authorize/{token}',
+            'link': f'{url}/authorize/{token}',
         }
 
         subject = 'Authorization Link'

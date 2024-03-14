@@ -37,7 +37,7 @@ class Container(object):
             container.name for container in self.client.containers.list(all=True)]
         return containers
 
-    def create_container(self, image, name):
+    def create_container(self, language, name):
         """
         Create a Docker container with the specified image and name.
 
@@ -58,7 +58,7 @@ class Container(object):
         }
         try:
             container_config = {
-                'image': images[image],
+                'image': images[language],
                 'tty': True,
                 'stdin_open': True,
                 'name': name,

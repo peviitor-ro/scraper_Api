@@ -63,7 +63,7 @@ class Scraper(object):
         dependecies_commands = {
             'requirements.txt': 'pip3 install -r requirements.txt',
             'package.json': 'npm i',
-            'setup.py': 'python3 setup.py develop'
+            'setup.py': 'python3 setup.py develop',
         }
 
         exec_command = (
@@ -74,9 +74,12 @@ class Scraper(object):
         dependencies_file = "".join(
             [file for file in exec_command if file in self.dependencies])
 
+        command = dependecies_commands.get(
+            dependencies_file) if dependecies_commands.get(dependencies_file) else 'bash'
+
         exec_command = (self.container
                         .run_command(
-                            command=dependecies_commands[dependencies_file],
+                            command=command,
                             path=f'/{self.container.client_container.name}'))
 
         return exec_command

@@ -20,7 +20,7 @@ class GenerivView(APIView):
         response = [
             {
                 'name': scraper,
-                'endpoint': f'http://{host}/scraper/{scraper}/'
+                'endpoint': f'https://{host}/scraper/{scraper}/'
             } for scraper in scrapers
         ]
         return Response(response)

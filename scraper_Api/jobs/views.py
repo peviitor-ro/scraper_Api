@@ -68,7 +68,6 @@ class JobView(object):
 class AddScraperJobs(APIView, JobView):
     def post(self, request):
         jobs = self.transformed_jobs(request.data)
-
         if not jobs:
             return Response(status=400)
         
@@ -90,7 +89,8 @@ class AddScraperJobs(APIView, JobView):
             job_serializer = JobAddSerializer(data=job, context={"request": request})
 
             job_serializer.is_valid(raise_exception=True)
-            job_serializer.save()
+            
+            instance = job_serializer.save()
 
             posted_jobs.append(job_serializer.data)
 

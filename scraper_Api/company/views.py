@@ -52,7 +52,6 @@ class DeleteCompany(APIView):
         if user_companies.filter(company=company.title()).exists():
             company = user_companies.get(company=company.title())
             company.delete()
-            print("Company deleted")
             return Response(status=200)
         else:
             return Response(status=401)

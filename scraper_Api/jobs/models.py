@@ -1,10 +1,10 @@
 import hashlib
 from django.db import models
 from company.models import Company
-import pysolr
 import datetime
 from dotenv import load_dotenv
 import os
+import requests
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -36,15 +36,10 @@ class Job(models.Model):
         if self.published:
             self.date = datetime.datetime.now()
         super(Job, self).save(*args, **kwargs)
-        solr = pysolr.Solr(DATABASE_URL)
 
-        if self.published:
-            #for testing purposes
-            solr.delete(q=f'job_link:"{self.job_link}"')
-            solr.commit()
-
-            
-            solr.add([
+        requests.post(
+            f"{DATABASE_URL}update/", headers={"Content-Type": "application/json"},
+            json=[
                 {
                     "job_link": self.job_link,
                     "job_title": self.job_title,
@@ -54,12 +49,12 @@ class Job(models.Model):
                     "county": self.county.split(","),
                     "remote": self.remote.split(","),
                 }
-            ])
-            solr.commit()
+            ]
+        )
 
     def delete(self, *args, **kwargs):
-        solr = pysolr.Solr(DATABASE_URL)
-        q = f'job_link:"{self.job_link}"'
-        solr.delete(q=q)
-        solr.commit()
+        requests.post(
+            f"{DATABASE_URL}delete/", headers={"Content-Type": "application/json"},
+            json={"urls": [self.job_link]}
+        )
         super(Job, self).delete(*args, **kwargs)

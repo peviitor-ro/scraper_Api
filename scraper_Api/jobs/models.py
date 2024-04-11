@@ -35,22 +35,21 @@ class Job(models.Model):
     def save(self, *args, **kwargs):
         if self.published:
             self.date = datetime.datetime.now()
+            requests.post(
+                f"{DATABASE_URL}update/", headers={"Content-Type": "application/json"},
+                json=[
+                    {
+                        "job_link": self.job_link,
+                        "job_title": self.job_title,
+                        "company": self.company.company,
+                        "country": self.country.split(","),
+                        "city": self.city.split(","),
+                        "county": self.county.split(","),
+                        "remote": self.remote.split(","),
+                    }
+                ]
+            )
         super(Job, self).save(*args, **kwargs)
-
-        requests.post(
-            f"{DATABASE_URL}update/", headers={"Content-Type": "application/json"},
-            json=[
-                {
-                    "job_link": self.job_link,
-                    "job_title": self.job_title,
-                    "company": self.company.company,
-                    "country": self.country.split(","),
-                    "city": self.city.split(","),
-                    "county": self.county.split(","),
-                    "remote": self.remote.split(","),
-                }
-            ]
-        )
 
     def delete(self, *args, **kwargs):
         requests.post(

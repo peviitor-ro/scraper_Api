@@ -79,24 +79,24 @@ class AddScraperJobs(APIView, JobView):
             company_serializer = CompanySerializer(data={"company": company},)
 
             company_serializer.is_valid(raise_exception=True)
-            instance = company_serializer.save()
+            company_instance = company_serializer.save()
 
             user = request.user
-            user.company.add(instance)
+            user.company.add(company_instance)
 
-            job["company"] = instance.id
+            job["company"] = company_instance.id
 
             job_serializer = JobAddSerializer(data=job, context={"request": request})
 
             job_serializer.is_valid(raise_exception=True)
             
-            instance = job_serializer.save()
+            job_serializer.save()
 
             posted_jobs.append(job_serializer.data)
 
         current_date = datetime.now()
         DataSet.objects.update_or_create(
-            company=instance, date=current_date, defaults={"data": len(posted_jobs)}
+            company=company_instance, date=current_date, defaults={"data": len(posted_jobs)}
         )
         return Response(posted_jobs)
 

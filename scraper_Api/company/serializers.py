@@ -38,8 +38,8 @@ class CompanySerializer(serializers.ModelSerializer):
 
         logo = [logo.get('logo')[0] for logo in results.docs if logo.get(
             'id').lower() == obj.company.lower()]
-
-        return logo[0]
+        
+        return logo[0] if logo else None
 
 
 class DataSetSerializer(serializers.ModelSerializer):

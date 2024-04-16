@@ -36,10 +36,11 @@ class CompanySerializer(serializers.ModelSerializer):
             'rows': '10000',
         })
 
-        logo = [logo.get('logo')[0] for logo in results.docs if logo.get(
-            'id').lower() == obj.company.lower()]
+        for logo in results.docs:
+            if logo.get('id').lower() == obj.company.lower():
+                return logo.get('logo')[0]
         
-        return logo[0] if logo else None
+        return None
 
 
 class DataSetSerializer(serializers.ModelSerializer):

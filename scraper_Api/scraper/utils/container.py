@@ -37,7 +37,7 @@ class Container(object):
             container.name for container in self.client.containers.list(all=True)]
         return containers
 
-    def create_container(self, language, name):
+    def create_container(self, language, name, environment=False):
         """
         Create a Docker container with the specified image and name.
 
@@ -52,17 +52,35 @@ class Container(object):
             Exception: If an error occurs while creating the container.
         """
         images = {
-            'python': 'python:3.9',
-            'node': 'node:latest',
-            'jmeter': 'jmeter:latest'
+            'python': {
+                'container': 'python:3.9',
+                'environment': {
+                    'PYTHONPATH': f'/{name}/'
+                }
+            },
+            'node': {
+                'container': 'node:latest',
+                'environment': {
+                    'NODE_PATH': f'/{name}/'
+                }
+            },
+            'jmeter': {
+                'container': 'jmeter:latest',
+                'environment': {
+                    'JMETER_HOME': f'/{name}/'
+                }
+            }
         }
         try:
             container_config = {
-                'image': images[language],
+                'image': images[language]['container'],
                 'tty': True,
                 'stdin_open': True,
                 'name': name,
             }
+
+            if environment:
+                container_config['environment'] = images.get(language).get('environment')
 
             self.client_container = self.client.containers.create(
                 **container_config)

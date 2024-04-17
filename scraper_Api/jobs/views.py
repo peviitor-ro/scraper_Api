@@ -117,7 +117,7 @@ class AddScraperJobs(APIView, JobView):
             to_delete = [job for job in database_jobs if job not in scraper_data]
 
             for job in to_delete:
-                Job.objects.filter(job_link=job).delete()
+                Job.objects.filter(job_link=job).first().delete()
 
 
 

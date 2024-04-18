@@ -103,8 +103,7 @@ class AddScraperJobs(APIView, JobView):
 
     @property
     def delete(self):
-        scraper_data = self.request.data
-
+        scraper_data = self.transformed_jobs(self.request.data)
         if isinstance(scraper_data, list) and len(scraper_data) > 0:
             company_obj = Company.objects.filter(
                 company=self.transform_data(scraper_data[0].get("company"))

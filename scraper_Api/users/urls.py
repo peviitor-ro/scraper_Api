@@ -7,4 +7,5 @@ urlpatterns = [
     path('update', views.UpdateUser.as_view()),
     path('refresh', views.RefreshTokenView.as_view()),
     path('authorized/<str:token>', views.Authorized.as_view()),
+    path('user/companies', views.UsersCompany.as_view()),
 ]

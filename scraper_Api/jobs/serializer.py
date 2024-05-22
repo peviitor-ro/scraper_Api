@@ -15,12 +15,13 @@ class JobAddSerializer(serializers.ModelSerializer):
                   'city', 'county', 'remote', 'job_id', 'company_name']
 
     def create(self, validated_data):
-        validate = serializers.ChoiceField(choices=[('remote', 'remote'), ('on-site', 'on-site'), ('hybrid', 'hybrid')], allow_blank=True)
-        remote_element = validated_data['remote'].split(',')
+        validate = serializers.ChoiceField(choices=[('remote', 'remote'), ('on-site', 'on-site'), ('hybrid', 'hybrid')],
+                                           allow_blank=True)
+        remote_elements = validated_data['remote'].split(',')
 
-        for el in remote_element:
-            test = validate.to_internal_value(el)
-            print(test)
+        for element in remote_elements:
+            validated_element = validate.to_internal_value(element)
+
         max_retries = 5
         retry_delay = 0.5
         for retry in range(max_retries):
@@ -46,9 +47,7 @@ class JobAddSerializer(serializers.ModelSerializer):
     def get_company_name(self, obj):
         return obj.company.company
 
-    def get_remote(self, obj):
-        print(obj.remote)
-        return obj.remote
+
 
 
 

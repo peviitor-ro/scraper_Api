@@ -48,10 +48,6 @@ class JobAddSerializer(serializers.ModelSerializer):
         return obj.company.company
 
 
-
-
-
-
 class JobAEditSerializer(JobAddSerializer):
     def create(self, validated_data):
         with transaction.atomic():

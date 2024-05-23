@@ -1,0 +1,49 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PeViitor</title>
+  </head>
+  <body>
+    <table
+      align="center"
+      border="0"
+      cellpadding="0"
+      cellspacing="0"
+      width="600"
+    >
+      <tr>
+        <td bgcolor="#ffffff" style="padding: 40px 30px">
+          <h1 style="font-size: 24px; color: #333333; margin: 0">
+            Bine ai venit, {{ user }}!
+          </h1>
+          <p style="font-size: 16px; color: #666666">
+            Suntem încântați să te avem alături de noi.
+          </p>
+          <p style="font-size: 16px; color: #666666">
+            Link-ul tau de conectare este:
+            <a href="{{ link }}" style="color: #007bff; text-decoration: none"
+              >{{ link }}</a
+            >
+          </p>
+          <p style="font-size: 16px; color: #666666">
+            Dacă ai întrebări sau nelămuriri, nu ezita să ne contactezi. Suntem
+            aici pentru a te ajuta!
+          </p>
+          <p style="font-size: 16px; color: #666666">Cu stimă,</p>
+          <p style="font-size: 16px; color: #666666; margin-bottom: 0">
+            Echipa
+            <img
+              src="{% static 'svg/peviitor.svg' %}"
+              alt="peviitor"
+              width="50"
+            />
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

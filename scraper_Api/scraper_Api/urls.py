@@ -17,13 +17,14 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.static import serve
 from django.conf import settings
-from Api.views import PeviitorData
-from Api.views import DataSetView as DataSet
 
 urlpatterns = [
-    path('', PeviitorData.as_view()),
+    path('', include('users.urls')),
+    path('companies/', include('company.urls')),
+    path('jobs/', include('jobs.urls')),
     path('admin/', admin.site.urls),
-    path('scraper/', include('Api.urls')),
-    path('dataset/<path>/<scraper>/', DataSet.as_view()),
-    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}, name='static'),
+    path('scraper/', include('scraper.urls')),
+    path('orase/', include('orase.urls')),
+    re_path(r'^static/(?P<path>.*)$', serve,
+            {'document_root': settings.STATIC_ROOT}, name='static'),
 ]

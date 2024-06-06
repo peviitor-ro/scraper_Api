@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Recommendations</title>
+</head>
+<body>
+    <p>Hello {{ email.name }},</p>
+
+    <p>You recently set up a job subscription on peviitor.</p>
+
+    <p>We are happy to give you the following job recommendations matching your latest searches:</p>
+
+    <ul>
+        {% for job in recommended_jobs %}
+            <li>
+                <a href="{{ job.link }}" target="_blank">{{ job.title }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <p>Are you interested in one or more of these positions? Simply click the respective link to check out the job description and apply right away.</p>
+
+    <p>To see your current job subscriptions, please click <a href="{% url 'unsubscribe' %}">here</a>. You can manage existing subscriptions or add new ones there.</p>
+
+    <p>Kind regards,</p>
+    <p>Peviitor Team</p>
+</body>
+</html>

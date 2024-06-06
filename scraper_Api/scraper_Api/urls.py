@@ -27,4 +27,5 @@ urlpatterns = [
     path('orase/', include('orase.urls')),
     re_path(r'^static/(?P<path>.*)$', serve,
             {'document_root': settings.STATIC_ROOT}, name='static'),
+    path('newsletter/', include('newsletter.urls')),
 ]

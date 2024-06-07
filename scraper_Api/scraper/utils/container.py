@@ -83,7 +83,7 @@ class Container(object):
                 container_config['environment'] = images.get(language).get('environment')
 
             if key and value:
-                container_config['environment'] = {key: value}
+                container_config['environment'].update({key: value})
 
             self.client_container = self.client.containers.create(
                 **container_config)

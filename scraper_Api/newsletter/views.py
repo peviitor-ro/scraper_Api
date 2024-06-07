@@ -84,16 +84,21 @@ class RecommendedJobsView(APIView):
             user = Users.objects.get(email=email)
             newsletter = Newsletter.objects.get(email=user)
 
-            title_condition = Q(job_title__icontains=newsletter.job_title)
-            exact_title_condition = Q(job_title=newsletter.job_title)
-            city_condition = Q(city__icontains=newsletter.city)
-            company_condition = Q(company__company__icontains=newsletter.company)
-            remote_condition = Q(remote__icontains=newsletter.job_type)
-            published_condition = Q(published=True)
+            filter_search = Q(published=True)
 
-            jobs = Job.objects.filter(
-                (exact_title_condition | title_condition | city_condition | company_condition | remote_condition
-                 ) & published_condition)
+            if newsletter.job_title:
+                filter_search &= Q(job_title__icontains=newsletter.job_title)
+
+            if newsletter.city:
+                filter_search &= Q(city__icontains=newsletter.city)
+
+            if newsletter.company:
+                filter_search &= Q(company__company__icontains=newsletter.company)
+
+            if newsletter.job_type:
+                filter_search &= Q(remote__icontains=newsletter.job_type)
+
+            jobs = Job.objects.filter(filter_search)
 
             #send_newsletter_mail(newsletter.email, [{"title": job.job_title, "link": job.job_link} for job in jobs])
             return Response([job.job_title for job in jobs])

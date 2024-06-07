@@ -3,6 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from django.db.models import Q
 from .serializer import CitySerializer
+from rest_framework.response import Response
 
 from .models import City
 from utils.pagination import CustomPagination
@@ -14,8 +15,11 @@ class CityViewSet(APIView):
     pagination_class = CustomPagination
 
     def get(self, request):
-        search = request.GET.get('search') or ''
+        search = request.GET.get('search') or None
 
+        if not search:
+            return Response([])
+        
         queryset = City.objects.filter(
             Q(name__icontains=search)
         )

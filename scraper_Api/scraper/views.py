@@ -22,7 +22,8 @@ class ScraperAddView(GenerivView):
         url = request.data.get('url')
         language = request.data.get('language').lower()
         environment = request.data.get('isSystemVariable') or False
-
+        key = request.data.get("key") 
+        value = request.data.get("value")
         response = dict()
 
         if not url or not language:
@@ -30,7 +31,7 @@ class ScraperAddView(GenerivView):
 
         try:
             name = url.split('/')[-1].split('.git')[0]
-            container = Container().create_container(language, name, environment)
+            container = Container().create_container(language, name, environment, key, value)
             scraper = Scraper(container)
 
             scraper_name = scraper.container.client_container.name

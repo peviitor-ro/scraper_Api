@@ -137,8 +137,8 @@ class Scraper(object):
                 stderr = exec_command[1].decode('utf-8')
                 response['error'] = stderr
 
-        except Exception:
-            response['error'] = "File not found"
+        except Exception :
+            response['error'] = "An error occurred while running the scraper."
 
         return response
 

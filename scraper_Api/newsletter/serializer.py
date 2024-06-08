@@ -26,7 +26,11 @@ class NewsletterSerializer(serializers.ModelSerializer):
       newsletter.clean_data()
 
     for k, v in data_search.items():
-      setattr(newsletter, k, v)
+      if isinstance(v, list):
+
+        setattr(newsletter, k, ",".join(v).strip())
+      else:
+        setattr(newsletter, k, v)
     newsletter.save()
 
     return newsletter

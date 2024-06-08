@@ -8,7 +8,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Users, Newsletter
-from django.shortcuts import get_object_or_404
 
 from jobs.models import Job
 from .serializer import NewsletterSerializer, UserSerializer
@@ -20,8 +19,13 @@ class SubscribeView(generics.CreateAPIView):
 
     serializer_class = UserSerializer
 
-    def perform_create(self, serializer):
+    def post(self, request):
+        data = request.data
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
         serializer.save()
+        return Response(status=status.HTTP_201_CREATED)
+
 
 
 @permission_classes([AllowAny])
@@ -84,13 +88,14 @@ class RecommendedJobsView(APIView):
             user = Users.objects.get(email=email)
             newsletter = Newsletter.objects.get(email=user)
 
-            filter_search = Q(published=True)
+            filter_search = Q(published=False)
 
             if newsletter.job_title:
                 filter_search &= Q(job_title__icontains=newsletter.job_title)
 
             if newsletter.city:
-                filter_search &= Q(city__icontains=newsletter.city)
+                cities = newsletter.city.split(",")
+                filter_search &= Q(city__in=cities)
 
             if newsletter.company:
                 filter_search &= Q(company__company__icontains=newsletter.company)
@@ -101,7 +106,8 @@ class RecommendedJobsView(APIView):
             jobs = Job.objects.filter(filter_search)
 
             #send_newsletter_mail(newsletter.email, [{"title": job.job_title, "link": job.job_link} for job in jobs])
-            return Response([job.job_title for job in jobs])
+            response = [{"title": job.job_title, "link": job.company.company} for job in jobs]
+            return Response(response)
         except Users.DoesNotExist:
             return Response('error User with this email does not exist')
         except Newsletter.DoesNotExist:

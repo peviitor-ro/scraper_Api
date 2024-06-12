@@ -82,7 +82,7 @@ class RecommendedJobsView(APIView):
             if newsletter.job_type:
                 filter_search &= Q(remote__icontains=newsletter.job_type)
 
-            jobs = Job.objects.filter(filter_search)[::10]
+            jobs = Job.objects.filter(filter_search)
 
             #send_newsletter_mail(newsletter.email, [{"title": job.job_title, "link": job.job_link} for job in jobs])
             response = [{"title": job.job_title, "link": job.company.company} for job in jobs]

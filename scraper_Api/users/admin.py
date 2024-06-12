@@ -18,16 +18,9 @@ class CustomUserAdmin(admin.ModelAdmin):
     ordering = ["email"]
     # create a list of fields to be read only
     readonly_fields = ["last_login", "date_joined"]
-    # create a list of fields to be excluded
-    exclude = ["password"]
     # create a list of fields to be editable
     list_editable = ["is_active", "is_staff", "is_superuser"]
-    # create a list of fields to be displayed in the detail view
-    fieldsets = (
-        (None, {"fields": ("email", "password")}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
-        ("Important dates", {"fields": ("last_login", "date_joined")}),
-    )
+
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)

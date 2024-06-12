@@ -8,9 +8,12 @@ https://docs.djangoproject.com/en/4.0/howto/deployment/wsgi/
 """
 
 import os
-
+from newsletter.runapscheduler import start
 from django.core.wsgi import get_wsgi_application
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'scraper_Api.settings')
 
 application = get_wsgi_application()
+
+start()

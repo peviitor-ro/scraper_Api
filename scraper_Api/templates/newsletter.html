@@ -18,9 +18,9 @@
     <ul>
       {% for job in recommended_jobs %}
       <li>
-        <a href="{{ job.link }}" target="_blank"
-          >{{ job.title }} la {{ job.company }} în {{ job.location }}</a
-        >
+        <a href="{{ job.link }}" target="_blank">
+          {{ job.title }} la {{ job.company }} {% if job.city %} in {{ job.city}} {% endif %} {% if job.remote %} ({{ job.remote }}) {% endif %}
+        </a>
       </li>
       {% endfor %}
     </ul>

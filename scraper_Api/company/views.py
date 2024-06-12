@@ -88,7 +88,7 @@ class ClearCompany(APIView):
 
         solr = Solr(url=os.getenv("DATABASE_SOLR"))
         solr.delete(q=f"company:{company.company}")
-        solr.commit()
+        solr.commit(expungeDeletes=True)
 
 
 class DataSetView(APIView):

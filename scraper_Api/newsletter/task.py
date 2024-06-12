@@ -29,7 +29,7 @@ def send_newsletter_mail(email, recommended_jobs):
 
 def search():
     for newsletter in Newsletter.objects.all():
-        filter_search = Q(published=False)
+        filter_search = Q(published=True)
 
         if newsletter.job_title:
             filter_search &= Q(job_title__icontains=newsletter.job_title)
@@ -47,7 +47,8 @@ def search():
 
         jobs = Job.objects.filter(filter_search)
 
-        obj = [{"title": job.job_title, "link": job.job_link} for job in jobs]
+        obj = [{"title": job.job_title, "link": job.job_link,
+                "company": job.company.company, "city": job.city, "remote": job.remote} for job in jobs]
 
         send_newsletter_mail(newsletter.email, obj)
 

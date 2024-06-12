@@ -1,29 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Job Recommendations</title>
-</head>
-<body>
-    <p>Hello {{ email.name }},</p>
+  </head>
+  <body>
+    <p>Salut {{ email.name }},</p>
 
-    <p>You recently set up a job subscription on peviitor.</p>
+    <p>
+      Sperăm că ești bine și că îți merge bine la locul de muncă. Am observat că
+      ești interesat de poziții noi și am găsit câteva joburi care s-ar potrivi
+      cu profilul tău.
+    </p>
 
-    <p>We are happy to give you the following job recommendations matching your latest searches:</p>
+    <p>Iată câteva joburi pe care le-am găsit pentru tine:</p>
 
     <ul>
-        {% for job in recommended_jobs %}
-            <li>
-                <a href="{{ job.link }}" target="_blank">{{ job.title }}</a>
-            </li>
-        {% endfor %}
+      {% for job in recommended_jobs %}
+      <li>
+        <a href="{{ job.link }}" target="_blank"
+          >{{ job.title }} la {{ job.company }} în {{ job.location }}</a
+        >
+      </li>
+      {% endfor %}
     </ul>
 
-    <p>Are you interested in one or more of these positions? Simply click the respective link to check out the job description and apply right away.</p>
+    <p>
+      Ești interesat de una sau mai multe dintre aceste poziții? Doar dă clic pe
+      link-ul corespunzător pentru a verifica descrierea jobului și a aplica
+      imediat.
+    </p>
 
-    <p>To see your current job subscriptions, please click <a href="{% url 'unsubscribe' %}">here</a>. You can manage existing subscriptions or add new ones there.</p>
+    <p>
+      Dacă nu mai dorești să primești recomandări de joburi, te poți dezabona
+      <a href="{% url 'unsubscribe' %}">here</a>.
+    </p>
 
-    <p>Kind regards,</p>
-    <p>Peviitor Team</p>
-</body>
+    <p>Multumim,</p>
+    <p>Echipa Peviitor</p>
+  </body>
 </html>

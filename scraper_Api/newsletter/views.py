@@ -1,6 +1,5 @@
 
 from django.db.models import Q
-from django.template.loader import render_to_string
 from rest_framework import generics, views
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
@@ -11,7 +10,6 @@ from .models import Users, Newsletter
 
 from jobs.models import Job
 from .serializer import NewsletterSerializer, UserSerializer
-from django.core.mail import send_mail
 
 
 @permission_classes([AllowAny])
@@ -57,27 +55,7 @@ class SaveNewsletterDataView(views.APIView):
         return Response({'message': 'Subscribed successfully'}, status=status.HTTP_201_CREATED)
 
 
-def send_newsletter_mail(email, recommended_jobs):
-    template = 'newsletter.html'
-
-    context = {
-        'email': email,
-        'recommended_jobs': recommended_jobs,
-    }
-
-    subject = 'Jop postings update'
-    message = render_to_string(template, context)
-    email_from = 'cristi_olteanu@outlook.com'
-    recipient_list = [email.email, ]
-    send_mail(
-        subject=subject,
-        message="",
-        from_email=email_from,
-        recipient_list=recipient_list,
-        html_message=message,
-    )
-
-
+# for testing purposes
 @permission_classes([AllowAny])
 class RecommendedJobsView(APIView):
 
@@ -98,12 +76,13 @@ class RecommendedJobsView(APIView):
                 filter_search &= Q(city__in=cities)
 
             if newsletter.company:
-                filter_search &= Q(company__company__icontains=newsletter.company)
+                companies = newsletter.company.split(",")
+                filter_search &= Q(company__company__in=companies)
 
             if newsletter.job_type:
                 filter_search &= Q(remote__icontains=newsletter.job_type)
 
-            jobs = Job.objects.filter(filter_search)
+            jobs = Job.objects.filter(filter_search)[::10]
 
             #send_newsletter_mail(newsletter.email, [{"title": job.job_title, "link": job.job_link} for job in jobs])
             response = [{"title": job.job_title, "link": job.company.company} for job in jobs]

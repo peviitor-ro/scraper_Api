@@ -77,6 +77,9 @@ INSTALLED_APPS = [
     # Cors
     'corsheaders',
 
+    #external apps
+    'django_apscheduler',
+
     # Apps
     'scraper',
     'company',

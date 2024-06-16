@@ -1,7 +1,7 @@
 import hashlib
 from django.db import models
 from company.models import Company
-import datetime
+from django.utils.timezone import datetime
 from dotenv import load_dotenv
 import os
 import requests
@@ -34,7 +34,7 @@ class Job(models.Model):
 
     def save(self, *args, **kwargs):
         if self.published:
-            self.date = datetime.datetime.now()
+            self.date = datetime.now()
             requests.post(
                 f"{DATABASE_URL}update/", headers={"Content-Type": "application/json"},
                 json=[

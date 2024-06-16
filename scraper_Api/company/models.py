@@ -1,5 +1,5 @@
 from django.db import models
-from datetime import datetime
+from django.utils.timezone import datetime
 
 class Company(models.Model):
     """

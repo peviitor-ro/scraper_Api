@@ -20,8 +20,3 @@ class CustomUserAdmin(admin.ModelAdmin):
     readonly_fields = ["last_login", "date_joined"]
     # create a list of fields to be editable
     list_editable = ["is_active", "is_staff", "is_superuser"]
-
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet:
-        qs = super().get_queryset(request)
-        return qs.filter(is_superuser=False)

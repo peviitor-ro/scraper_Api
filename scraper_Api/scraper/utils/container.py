@@ -38,6 +38,7 @@ class Container(object):
         return containers
 
     def create_container(self, language, name, environment=False, key=None, value=None):
+        print(language, name, environment, key, value)
         """
         Create a Docker container with the specified image and name.
 
@@ -59,7 +60,7 @@ class Container(object):
                 }
             },
             'node': {
-                'container': 'node:latest',
+                'container': 'node:18.17.0',
                 'environment': {
                     'NODE_PATH': f'/{name}/'
                 }
@@ -83,7 +84,12 @@ class Container(object):
                 container_config['environment'] = images.get(language).get('environment')
 
             if key and value:
-                container_config['environment'].update({key: value})
+                if container_config.get('environment'):
+                    container_config.get('environment').update({key: value})
+                else:
+                    container_config['environment'] = images[language]['environment']
+                    container_config['environment'].update({key: value})
+                    print(container_config)
 
             self.client_container = self.client.containers.create(
                 **container_config)

@@ -29,7 +29,7 @@ class JobAddSerializer(serializers.ModelSerializer):
                 with transaction.atomic():
                     instance, _ = Job.objects.get_or_create(
                         job_link=validated_data['job_link'], defaults=validated_data)
-                    if not instance.published and not instance.edited:
+                    if not instance.edited:
                         for key, value in validated_data.items():
 
                             setattr(instance, key, value)

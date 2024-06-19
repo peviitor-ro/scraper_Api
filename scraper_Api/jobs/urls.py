@@ -6,6 +6,7 @@ urlpatterns = [
     path('add/', views.AddScraperJobs.as_view()),
     path('edit/', views.EditJob.as_view()),
     path('delete/', views.DeleteJob.as_view()),
+    path('sync/', views.SyncronizeJobs.as_view()),
     path('publish/', views.PublishJob.as_view()),
 ]
 

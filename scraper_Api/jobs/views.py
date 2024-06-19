@@ -17,6 +17,9 @@ from .serializer import (
 
 from company.serializers import CompanySerializer
 
+from pysolr import Solr
+import os
+
 JOB_NOT_FOUND = {"message": "Job not found"}
 
 
@@ -231,3 +234,22 @@ class PublishJob(APIView, JobView):
     def post(self, request):
         response = self.update(request.data, "published")
         return response
+
+
+class SyncronizeJobs(APIView):
+    def post(self, request):
+        company = request.data.get("company")
+
+        if not company:
+            return Response(status=400)
+
+        solr = Solr(os.getenv("DATABASE_SOLR"), always_commit=True)
+        solr.delete(f"company:{company}")
+
+        company_instance = get_object_or_404(Company, company=company)
+        jobs = Job.objects.filter(company=company_instance, published=True)
+
+        for job in jobs:
+            job.save()
+
+        return Response({"message": "Jobs synchronized"})

@@ -31,7 +31,6 @@ class JobAddSerializer(serializers.ModelSerializer):
                         job_link=validated_data['job_link'], defaults=validated_data)
                     if not instance.edited:
                         for key, value in validated_data.items():
-
                             setattr(instance, key, value)
                     instance.save()
                     return instance

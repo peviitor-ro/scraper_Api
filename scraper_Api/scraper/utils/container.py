@@ -38,7 +38,6 @@ class Container(object):
         return containers
 
     def create_container(self, language, name, environment=False, key=None, value=None):
-        print(language, name, environment, key, value)
         """
         Create a Docker container with the specified image and name.
 

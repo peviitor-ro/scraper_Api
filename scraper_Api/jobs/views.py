@@ -243,8 +243,9 @@ class SyncronizeJobs(APIView):
         if not company:
             return Response(status=400)
 
-        solr = Solr(os.getenv("DATABASE_SOLR"), always_commit=True)
-        solr.delete(f"company:{company}")
+        solr = Solr(url=os.getenv("DATABASE_SOLR"))
+        solr.delete(q=f"company:{company}")
+        solr.commit(expungeDeletes=True)
 
         company_instance = get_object_or_404(Company, company=company)
         jobs = Job.objects.filter(company=company_instance, published=True)

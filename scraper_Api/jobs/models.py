@@ -34,21 +34,9 @@ class Job(models.Model):
 
     def save(self, *args, **kwargs):
         if self.published:
-            self.date = datetime.now()
-            requests.post(
-                f"{DATABASE_URL}update/", headers={"Content-Type": "application/json"},
-                json=[
-                    {
-                        "job_link": self.job_link,
-                        "job_title": self.job_title,
-                        "company": self.company.company,
-                        "country": self.country.split(","),
-                        "city": self.city.split(","),
-                        "county": self.county.split(","),
-                        "remote": self.remote.split(","),
-                    }
-                ]
-            )
+            if not self.date:
+                self.date = datetime.now()
+            self.publish()
         super(Job, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -57,3 +45,22 @@ class Job(models.Model):
             json={"urls": [self.job_link]}
         )
         super(Job, self).delete(*args, **kwargs)
+
+    def publish(self):
+        url = f"{DATABASE_URL}update/"
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url=url, headers=headers,
+            json=[
+                {
+                    "job_link": self.job_link,
+                    "job_title": self.job_title,
+                    "company": self.company.company,
+                    "country": self.country.split(","),
+                    "city": self.city.split(","),
+                    "county": self.county.split(","),
+                    "remote": self.remote.split(","),
+                }
+            ]
+        )
+
+        return response

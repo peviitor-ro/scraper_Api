@@ -1,7 +1,4 @@
-from typing import Any
 from django.contrib import admin
-from django.db.models.query import QuerySet
-from django.http import HttpRequest
 from .models import CustomUser
 
 
@@ -9,7 +6,7 @@ from .models import CustomUser
 class CustomUserAdmin(admin.ModelAdmin):
     
     # create a search bar for the admin page
-    search_fields = ["email"]
+    search_fields = ["email", "company__company"]
     # create a list of fields to display
     list_display = ["email", "is_active", "is_staff", "is_superuser", "last_login", "date_joined"]
     # create a list of fields to filter

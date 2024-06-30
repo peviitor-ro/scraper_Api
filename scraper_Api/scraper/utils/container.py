@@ -37,7 +37,7 @@ class Container(object):
             container.name for container in self.client.containers.list(all=True)]
         return containers
 
-    def create_container(self, language, name, environment=False):
+    def create_container(self, language, name, environment=False, key=None, value=None):
         """
         Create a Docker container with the specified image and name.
 
@@ -81,6 +81,9 @@ class Container(object):
 
             if environment:
                 container_config['environment'] = images.get(language).get('environment')
+
+            if key and value:
+                container_config['environment'] = {key: value}
 
             self.client_container = self.client.containers.create(
                 **container_config)

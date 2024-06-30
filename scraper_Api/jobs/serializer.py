@@ -20,7 +20,7 @@ class JobAddSerializer(serializers.ModelSerializer):
         remote_elements = validated_data['remote'].split(',')
 
         for element in remote_elements:
-            validated_element = validate.to_internal_value(element)
+            validate.to_internal_value(element.lower())
 
         max_retries = 5
         retry_delay = 0.5

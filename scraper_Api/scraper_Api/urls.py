@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('scraper/', include('scraper.urls')),
     path('orase/', include('orase.urls')),
+    path('mobile/', include('mobile.urls')),
     re_path(r'^static/(?P<path>.*)$', serve,
             {'document_root': settings.STATIC_ROOT}, name='static'),
     path('newsletter/', include('newsletter.urls')),

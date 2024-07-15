@@ -31,7 +31,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-nh-rh#j35y9n9o11$h@vto$^#5gr73f!0&wqml_1g!n_d(5%&g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG') == 'True'
+# DEBUG = os.getenv('DEBUG') == 'True'
+DEBUG = True
 
 APPEND_SLASH = False
 
@@ -40,6 +41,7 @@ ALLOWED_HOSTS = [
     'localhost',
     'dev.laurentiumarian.ro',
     'api.laurentiumarian.ro',
+    '192.168.0.156',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -93,6 +95,7 @@ INSTALLED_APPS = [
     'users',
     'orase',
     'newsletter',
+    'mobile',
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'

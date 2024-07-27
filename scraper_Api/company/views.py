@@ -59,7 +59,6 @@ class AddCompany(APIView):
     def post(self, request):
         validated_data = request.data
         user = request.user
-        print(validated_data)
 
         companies = Company.objects.filter(
             company=validated_data.get("company"))

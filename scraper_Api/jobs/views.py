@@ -71,6 +71,7 @@ class JobView(object):
 class AddScraperJobs(APIView, JobView):
     def post(self, request):
         jobs = self.transformed_jobs(request.data)
+        
         if not jobs:
             return Response(status=400)
 
@@ -99,9 +100,13 @@ class AddScraperJobs(APIView, JobView):
             posted_jobs.append(job_serializer.data)
 
         current_date = datetime.now()
+
+        company_instance = Company.objects.get(company=company)
+        jobs = Job.objects.filter(company=company_instance).count()
+        
         DataSet.objects.update_or_create(
             company=company_instance, date=current_date, defaults={
-                "data": len(posted_jobs)}
+                "data": jobs}
         )
         return Response(posted_jobs)
 

@@ -28,19 +28,21 @@ class CompanySerializer(serializers.ModelSerializer):
         return total_jobs
 
     def get_logo(self, obj):
+        
         url = 'http://zimbor.go.ro/solr/auth'
 
-        solr = pysolr.Solr(url)
+        try:
+            solr = pysolr.Solr(url)
+            company = obj.company
+            
+            query = f'id:{company} OR id:{company.lower()} OR id:{company.upper()} OR id:{company.capitalize()}'
+            results = solr.search(query, **{
+                'rows': '1',
+            })
 
-        results = solr.search('*:*', **{
-            'rows': '10000',
-        })
-
-        for logo in results.docs:
-            if logo.get('id').lower() == obj.company.lower():
-                return logo.get('logo')
-        
-        return None
+            return results.docs[0].get('logo')
+        except Exception:
+            return None
 
 
 class DataSetSerializer(serializers.ModelSerializer):

@@ -18,7 +18,7 @@ class Job(models.Model):
     country = models.TextField()
     city = models.TextField(blank=True)
     county = models.TextField(blank=True)
-    job_link = models.CharField(max_length=200)
+    job_link = models.CharField(max_length=300)
     job_title = models.TextField()
     remote = models.CharField(max_length=50, blank=True)
     edited = models.BooleanField(default=False)

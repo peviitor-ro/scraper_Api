@@ -64,10 +64,13 @@ class Authorized(APIView):
             user_id = decoded_token.payload.get('user_id')
             user = User.objects.get(pk=user_id)
             refresh_token = RefreshToken.for_user(user)
+
             response = {
                 "refresh": str(refresh_token),
                 "access": str(decoded_token),
                 "authorized": True,
+                "is_superuser": user.is_superuser,
+                "is_staff": user.is_staff,
             }
             return Response(response)
         except Exception:

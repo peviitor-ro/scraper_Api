@@ -4,6 +4,10 @@ from users.models import CustomUser
 from .models import Company, DataSet
 from jobs.models import Job
 
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 class CompanySerializer(serializers.ModelSerializer):
     jobsCount = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
@@ -29,7 +33,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
     def get_logo(self, obj):
         
-        url = 'http://zimbor.go.ro/solr/auth'
+        url = os.getenv("DATABASE_SOLR") + '/solr/auth'
 
         try:
             solr = pysolr.Solr(url)

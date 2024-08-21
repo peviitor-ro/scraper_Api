@@ -1,6 +1,9 @@
 from rest_framework import serializers
 import pysolr
 from jobs.models import Job
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 class JobSerializer(serializers.ModelSerializer):
     logo = serializers.SerializerMethodField()
@@ -10,19 +13,20 @@ class JobSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_logo(self, obj):
-        url = 'http://zimbor.go.ro/solr/auth'
+        url = os.getenv("DATABASE_SOLR") + '/solr/auth'
 
-        solr = pysolr.Solr(url)
+        try:
+            solr = pysolr.Solr(url)
+            company = obj.company
 
-        results = solr.search('*:*', **{
-            'rows': '10000',
-        })
+            query = f'id:{company} OR id:{company.lower()} OR id:{company.upper()} OR id:{company.capitalize()}'
+            results = solr.search(query, **{
+                'rows': '1',
+            })
 
-        for logo in results.docs:
-            if logo.get('id').lower() == obj.company.company.lower():
-                return logo.get('logo')
-
-        return None
+            return results.docs[0].get('logo')
+        except Exception:
+            return None
     
     def get_company_name(self, obj):
         return obj.company.company

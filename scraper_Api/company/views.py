@@ -136,7 +136,8 @@ class ClearCompany(APIView):
             job.published = False
             job.save()
 
-        solr = Solr(url=os.getenv("DATABASE_SOLR"))
+        url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
+        solr = Solr(url=url)
         solr.delete(q=f"company:{company.company}")
         solr.commit(expungeDeletes=True)
 

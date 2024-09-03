@@ -42,15 +42,11 @@ class Job(models.Model):
 
     def delete(self, *args, **kwargs):
         url = DATABASE_SOLR + "/solr/jobs"
-        try:
-            solr = pysolr.Solr(url=url)
-            solr.delete(q=f'job_link:"{self.job_link}"')
-            solr.commit(expungeDeletes=True) 
-            
-            super(Job, self).delete(*args, **kwargs)
-            return Response(status=200)   
-        except pysolr.SolrError as e:
-            return Response(status=400, data=e)
+        solr = pysolr.Solr(url=url)
+        solr.delete(q=f'job_link:"{self.job_link}"')
+        solr.commit(expungeDeletes=True) 
+        
+        super(Job, self).delete(*args, **kwargs)
 
         
 

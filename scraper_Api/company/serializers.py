@@ -4,6 +4,10 @@ from users.models import CustomUser
 from .models import Company, DataSet
 from jobs.models import Job
 
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 class CompanySerializer(serializers.ModelSerializer):
     jobsCount = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
@@ -28,19 +32,21 @@ class CompanySerializer(serializers.ModelSerializer):
         return total_jobs
 
     def get_logo(self, obj):
-        url = 'http://zimbor.go.ro/solr/auth'
-
-        solr = pysolr.Solr(url)
-
-        results = solr.search('*:*', **{
-            'rows': '10000',
-        })
-
-        for logo in results.docs:
-            if logo.get('id').lower() == obj.company.lower():
-                return logo.get('logo')
         
-        return None
+        url = os.getenv("DATABASE_SOLR") + '/solr/auth'
+
+        try:
+            solr = pysolr.Solr(url)
+            company = obj.company
+            
+            query = f'id:{company} OR id:{company.lower()} OR id:{company.upper()} OR id:{company.capitalize()}'
+            results = solr.search(query, **{
+                'rows': '1',
+            })
+
+            return results.docs[0].get('logo')
+        except Exception:
+            return None
 
 
 class DataSetSerializer(serializers.ModelSerializer):

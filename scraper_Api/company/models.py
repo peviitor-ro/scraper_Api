@@ -1,5 +1,5 @@
 from django.db import models
-from datetime import datetime
+from django.utils.timezone import datetime
 
 class Company(models.Model):
     """
@@ -14,7 +14,7 @@ class Company(models.Model):
 
     company = models.TextField(max_length=50)
     scname = models.CharField(max_length=50, blank=True)
-    website = models.CharField(max_length=50, blank=True)
+    website = models.CharField(max_length=300, blank=True)
     description = models.TextField(blank=True)
 
     def __str__(self):

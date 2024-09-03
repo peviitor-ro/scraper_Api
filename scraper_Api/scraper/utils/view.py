@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .container import Container
+from scraper_Api.settings import DEBUG
  
 class GenerivView(APIView):
     """
@@ -16,11 +16,12 @@ class GenerivView(APIView):
 
     def get(self, request):
         scrapers = request.user.scraper.all().values_list('name', flat=True)
+        protocol = 'http' if DEBUG else 'https'
         host = request.META['HTTP_HOST']
         response = [
             {
                 'name': scraper,
-                'endpoint': f'https://{host}/scraper/{scraper}/'
+                'endpoint': f'{protocol}://{host}/scraper/{scraper}/'
             } for scraper in scrapers
         ]
         return Response(response)

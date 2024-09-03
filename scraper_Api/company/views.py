@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from .serializers import DataSetSerializer
 
 from jobs.models import Job
+from company.models import Company
 from pysolr import Solr
 
 from dotenv import load_dotenv
@@ -49,10 +50,59 @@ class GetCompanyData(APIView):
         serializer = self.serializer_class(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+    
+    
+    
+class AddCompany(APIView):
+    serializer_class = CompanySerializer
+
+    def post(self, request):
+        validated_data = request.data
+        user = request.user
+
+        companies = Company.objects.filter(
+            company=validated_data.get("company"))
+
+        if companies.exists():
+            return Response(status=400)
+
+        serializer = self.serializer_class(data=validated_data)
+
+        if serializer.is_valid():
+            company = serializer.save()
+            user.company.add(company)
+            return Response(serializer.data, status=201)
+
+        return Response(serializer.errors, status=400)
+
+class UpdateCompany(APIView):  
+    serializer_class = CompanySerializer
+    def post(self, request):
+        user = request.user
+        company = request.data.get("company")
+        user_companies = user.company.all()
+
+        if user_companies.filter(company=company.title()).exists():
+            company = user_companies.get(company=company.title())
+            serializer = self.serializer_class(company, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(status=200)
+            else:
+                return Response(serializer.errors, status=400)
+        else:
+            return Response(status=401)
+        
 
 
 class DeleteCompany(APIView):
     def post(self, request):
+        user = request.user
+
+        if not user.is_superuser and not user.is_staff:
+            return Response(status=401)
+        
         company = request.data.get("company")
         user = request.user
         user_companies = user.company.all()
@@ -86,9 +136,10 @@ class ClearCompany(APIView):
             job.published = False
             job.save()
 
-        solr = Solr(url=os.getenv("DATABASE_SOLR"))
+        url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
+        solr = Solr(url=url)
         solr.delete(q=f"company:{company.company}")
-        solr.commit()
+        solr.commit(expungeDeletes=True)
 
 
 class DataSetView(APIView):

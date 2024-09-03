@@ -1,13 +1,14 @@
 import hashlib
 from django.db import models
 from company.models import Company
-import datetime
+from django.utils.timezone import datetime
 from dotenv import load_dotenv
 import os
-import requests
+from rest_framework.response import Response
+import pysolr
 
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_SOLR = os.getenv("DATABASE_SOLR")
 
 
 class Job(models.Model):
@@ -17,7 +18,7 @@ class Job(models.Model):
     country = models.TextField()
     city = models.TextField(blank=True)
     county = models.TextField(blank=True)
-    job_link = models.CharField(max_length=200)
+    job_link = models.CharField(max_length=300)
     job_title = models.TextField()
     remote = models.CharField(max_length=50, blank=True)
     edited = models.BooleanField(default=False)
@@ -34,26 +35,43 @@ class Job(models.Model):
 
     def save(self, *args, **kwargs):
         if self.published:
-            self.date = datetime.datetime.now()
-            requests.post(
-                f"{DATABASE_URL}update/", headers={"Content-Type": "application/json"},
-                json=[
-                    {
-                        "job_link": self.job_link,
-                        "job_title": self.job_title,
-                        "company": self.company.company,
-                        "country": self.country.split(","),
-                        "city": self.city.split(","),
-                        "county": self.county.split(","),
-                        "remote": self.remote.split(","),
-                    }
-                ]
-            )
+            if not self.date:
+                self.date = datetime.now()
+            self.publish()
         super(Job, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        requests.post(
-            f"{DATABASE_URL}delete/", headers={"Content-Type": "application/json"},
-            json={"urls": [self.job_link]}
-        )
+        url = DATABASE_SOLR + "/solr/jobs"
+        solr = pysolr.Solr(url=url)
+        solr.delete(q=f'job_link:"{self.job_link}"')
+        solr.commit(expungeDeletes=True) 
+        
         super(Job, self).delete(*args, **kwargs)
+
+        
+
+    def publish(self):
+        city = city = set(x.strip().split(" ")[0]
+                          for x in self.city.split(","))
+        url = DATABASE_SOLR + "/solr/jobs"
+
+        try:
+            solr = pysolr.Solr(url=url)
+            solr.add([
+                {
+                    "job_link": self.job_link,
+                    "job_title": self.job_title,
+                    "company": self.company.company,
+                    "country": self.country.split(","),
+                    "city": list(city),
+                    "county": self.county.split(","),
+                    "remote": self.remote.split(","),
+                }
+            ])
+
+            solr.commit(expungeDeletes=True)
+            return Response(status=200)
+        except pysolr.SolrError as e:
+            return Response(status=400, data=e)
+        
+

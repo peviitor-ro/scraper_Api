@@ -4,11 +4,11 @@ from company.models import Company
 from django.utils.timezone import datetime
 from dotenv import load_dotenv
 import os
-import requests
-import json
+from rest_framework.response import Response
+import pysolr
 
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_SOLR = os.getenv("DATABASE_SOLR")
 
 
 class Job(models.Model):
@@ -41,31 +41,41 @@ class Job(models.Model):
         super(Job, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        requests.post(
-            f"{DATABASE_URL}delete/", headers={"Content-Type": "application/json"},
-            json={"urls": [self.job_link]}
-        )
-        super(Job, self).delete(*args, **kwargs)
+        url = DATABASE_SOLR + "/solr/jobs"
+        try:
+            solr = pysolr.Solr(url=url)
+            solr.delete(q=f'job_link:"{self.job_link}"')
+            solr.commit(expungeDeletes=True) 
+            
+            super(Job, self).delete(*args, **kwargs)
+            return Response(status=200)   
+        except pysolr.SolrError as e:
+            return Response(status=400, data=e)
+
+        
 
     def publish(self):
-        url = f"{DATABASE_URL}update/"
-        headers = {
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
-        }
         city = city = set(x.strip().split(" ")[0]
                           for x in self.city.split(","))
+        url = DATABASE_SOLR + "/solr/jobs"
 
-        response = requests.post(url=url, headers=headers,
-                                 json=[
-                                     {
-                                         "job_link": self.job_link,
-                                         "job_title": self.job_title,
-                                         "company": self.company.company,
-                                         "country": self.country.split(","),
-                                         "city": list(city),
-                                         "county": self.county.split(","),
-                                         "remote": self.remote.split(","),
-                                     }
-                                 ])
-        return response
+        try:
+            solr = pysolr.Solr(url=url)
+            solr.add([
+                {
+                    "job_link": self.job_link,
+                    "job_title": self.job_title,
+                    "company": self.company.company,
+                    "country": self.country.split(","),
+                    "city": list(city),
+                    "county": self.county.split(","),
+                    "remote": self.remote.split(","),
+                }
+            ])
+
+            solr.commit(expungeDeletes=True)
+            return Response(status=200)
+        except pysolr.SolrError as e:
+            return Response(status=400, data=e)
+        
+

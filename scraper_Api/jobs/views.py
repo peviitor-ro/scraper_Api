@@ -36,6 +36,7 @@ class JobView(object):
                 setattr(job_obj, attribute, not getattr(job_obj, attribute))
                 job_obj.date = datetime.now()
                 job_obj.publish()
+                job_obj.save()
 
             return Response({"message": f"Job {attribute}"})
         else:

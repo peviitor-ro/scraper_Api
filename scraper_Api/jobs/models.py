@@ -1,7 +1,7 @@
 import hashlib
 from django.db import models
 from company.models import Company
-from django.utils.timezone import datetime
+from urllib.parse import quote
 from dotenv import load_dotenv
 import os
 from rest_framework.response import Response
@@ -36,14 +36,18 @@ class Job(models.Model):
     def delete(self, *args, **kwargs):
         url = DATABASE_SOLR + "/solr/jobs"
         solr = pysolr.Solr(url=url)
-        solr.delete(q=f'job_link:"{self.job_link}"')
+
+        job_link = quote(self.job_link, safe="")
+
+        solr.delete(q=f'job_link:"{job_link}"')
         solr.commit(expungeDeletes=True)
 
         super(Job, self).delete(*args, **kwargs)
 
     def publish(self):
-        city = set(x.strip().split(" ")[0]
+        city = set(x.strip()
                    for x in self.city.split(","))
+
         url = DATABASE_SOLR + "/solr/jobs"
 
         try:

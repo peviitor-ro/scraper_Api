@@ -52,9 +52,12 @@ class Job(models.Model):
 
         try:
             solr = pysolr.Solr(url=url)
+
+            job_link = quote(self.job_link, safe="")
+
             solr.add([
                 {
-                    "job_link": self.job_link,
+                    "job_link": job_link,
                     "job_title": self.job_title,
                     "company": self.company.company,
                     "country": self.country.split(","),

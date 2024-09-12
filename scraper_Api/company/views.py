@@ -23,20 +23,31 @@ class GetCompanyData(APIView):
     pagination_class = CustomPagination
 
     def get(self, request):
-        user = request.user
 
         order_query = request.GET.get("order", "name_asc")
         order_by = COMPANY_SORT_OPTIONS.get(order_query)
         search_query = request.GET.get("search") or ""
 
-        if order_by == "job_count" or order_by == "-job_count":
+        model = Company.objects.all()
+        if "access_" in order_query:
+            model = request.user.company
+            order_by = COMPANY_SORT_OPTIONS.get(order_query.replace("access_", ""))
+
+
+        if order_by in ["jobs_count", "-jobs_count"]:
+            queryset = (model.annotate(jobs_count=Count(
+                "jobs")).order_by(order_by))
+
+        elif order_by in ["un_published_jobs_count", "-un_published_jobs_count"]:
             queryset = (
-                user.company.annotate(job_count=Count(
-                    "Company")).order_by(order_by)
+                model.annotate(
+                    un_published_jobs_count=Count(
+                        "jobs", filter=Q(jobs__published=True))
+                ).order_by(order_by)
             )
         else:
             queryset = (
-                user.company.filter(
+                model.filter(
                     Q(company__icontains=search_query) | Q(
                         scname__icontains=search_query)
                 )
@@ -47,12 +58,12 @@ class GetCompanyData(APIView):
 
         result_page = paginator.paginate_queryset(queryset, request)
 
-        serializer = self.serializer_class(result_page, many=True)
+        serializer = self.serializer_class(
+            result_page, many=True, context={"request": request})
 
         return paginator.get_paginated_response(serializer.data)
-    
-    
-    
+
+
 class AddCompany(APIView):
     serializer_class = CompanySerializer
 
@@ -75,8 +86,10 @@ class AddCompany(APIView):
 
         return Response(serializer.errors, status=400)
 
-class UpdateCompany(APIView):  
+
+class UpdateCompany(APIView):
     serializer_class = CompanySerializer
+
     def post(self, request):
         user = request.user
         company = request.data.get("company")
@@ -84,7 +97,8 @@ class UpdateCompany(APIView):
 
         if user_companies.filter(company=company.title()).exists():
             company = user_companies.get(company=company.title())
-            serializer = self.serializer_class(company, data=request.data, partial=True)
+            serializer = self.serializer_class(
+                company, data=request.data, partial=True)
 
             if serializer.is_valid():
                 serializer.save()
@@ -93,7 +107,6 @@ class UpdateCompany(APIView):
                 return Response(serializer.errors, status=400)
         else:
             return Response(status=401)
-        
 
 
 class DeleteCompany(APIView):
@@ -102,7 +115,7 @@ class DeleteCompany(APIView):
 
         if not user.is_superuser and not user.is_staff:
             return Response(status=401)
-        
+
         company = request.data.get("company")
         user = request.user
         user_companies = user.company.all()

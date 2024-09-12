@@ -10,12 +10,14 @@ load_dotenv()
 
 class CompanySerializer(serializers.ModelSerializer):
     jobsCount = serializers.SerializerMethodField()
+    published_jobs = serializers.SerializerMethodField()
+    have_access = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
 
     class Meta:
         model = Company
         fields = ['company', 'scname', 'website',
-                  'description', 'logo', 'jobsCount']
+                  'description', 'logo', 'jobsCount', 'published_jobs', 'have_access']
 
     def create(self, validated_data):
         instance, create = Company.objects.get_or_create(**validated_data)
@@ -26,10 +28,21 @@ class CompanySerializer(serializers.ModelSerializer):
                 user.company.add(instance)
                 user.save()
         return instance
+    
+    def get_have_access(self, obj):
+        request = self.context.get('request')
+        user = request.user
+        return user.company.filter(id=obj.id).exists()
 
     def get_jobsCount(self, obj):
         total_jobs = Job.objects.filter(company=obj.id).count()
         return total_jobs
+    
+    def get_published_jobs(self, obj):
+        published_jobs = Job.objects.filter(company=obj.id, published=True).count()
+        return published_jobs
+    
+    
 
     def get_logo(self, obj):
         

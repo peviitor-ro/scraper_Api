@@ -1,7 +1,6 @@
 import hashlib
 from django.db import models
 from company.models import Company
-from urllib.parse import quote
 from dotenv import load_dotenv
 import os
 from rest_framework.response import Response
@@ -13,7 +12,7 @@ DATABASE_SOLR = os.getenv("DATABASE_SOLR")
 
 class Job(models.Model):
     company = models.ForeignKey(
-        Company, on_delete=models.CASCADE, related_name="Company"
+        Company, on_delete=models.CASCADE, related_name="jobs"
     )
     country = models.TextField()
     city = models.TextField(blank=True)
@@ -37,9 +36,7 @@ class Job(models.Model):
         url = DATABASE_SOLR + "/solr/jobs"
         solr = pysolr.Solr(url=url)
 
-        job_link = quote(self.job_link, safe="")
-
-        solr.delete(q=f'job_link:"{job_link}"')
+        solr.delete(q=f'job_link:"{self.job_link}"')
         solr.commit(expungeDeletes=True)
 
         super(Job, self).delete(*args, **kwargs)
@@ -52,12 +49,9 @@ class Job(models.Model):
 
         try:
             solr = pysolr.Solr(url=url)
-
-            job_link = quote(self.job_link, safe="")
-
             solr.add([
                 {
-                    "job_link": job_link,
+                    "job_link": self.job_link,
                     "job_title": self.job_title,
                     "company": self.company.company,
                     "country": self.country.split(","),

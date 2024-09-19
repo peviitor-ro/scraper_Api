@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 import re
-
+from scraper_Api.settings import DEBUG
 from .utils.view import GenerivView
 from .utils.scraper import Scraper
 from .utils.container import Container
@@ -115,7 +115,7 @@ class ScraperListView(GenerivView):
             exec_command = (container
                             .run_command('ls', f'/{scraper_name.name}/{folder}'))[0].decode('utf-8').split('\n')
 
-            protocol = 'http' if request.META.get('HTTP_HOST') else 'https'
+            protocol = 'http' if DEBUG else 'https'
             host = request.get_host()
 
             scrapers = {

@@ -6,6 +6,7 @@ from .utils.scraper import Scraper
 from .utils.container import Container
 from .models import Scraper as ScraperModel
 
+
 class ScraperAddView(GenerivView):
     """
     View for adding a scraper.
@@ -22,16 +23,23 @@ class ScraperAddView(GenerivView):
         url = request.data.get('url')
         language = request.data.get('language').lower()
         environment = request.data.get('isSystemVariable') or False
-        key = request.data.get("key") 
+        key = request.data.get("key")
         value = request.data.get("value")
         response = dict()
+
+        langoages = {
+            "python": "Python",
+            "node": "JavaScript",
+            "jmeter": "Jmeter"
+        }
 
         if not url or not language:
             return Response(status=400)
 
         try:
             name = url.split('/')[-1].split('.git')[0]
-            container = Container().create_container(language, name, environment, key, value)
+            container = Container().create_container(
+                language, name, environment, key, value)
             scraper = Scraper(container)
 
             scraper_name = scraper.container.client_container.name
@@ -49,10 +57,8 @@ class ScraperAddView(GenerivView):
                 'errors': dependencies[1]
             }
 
-            
-
             scraper_query = ScraperModel.objects.create(
-                name=scraper_name)
+                name=scraper_name, language=langoages[language])
             request.user.scraper.add(scraper_query.id)
             return Response(response)
 
@@ -72,7 +78,7 @@ class ScraperRemoveView(GenerivView):
 
     def post(self, request):
         repo = request.data.get('name')
-    
+
         try:
             scraper = request.user.scraper.get(name=repo)
             Container().remove_container(scraper.name)
@@ -97,6 +103,7 @@ class ScraperListView(GenerivView):
         get: Handles GET requests and returns a list of available scrapers.
         post: Handles POST requests and creates or updates a scraper.
     """
+
     def get(self, request, path=None):
 
         try:
@@ -108,8 +115,12 @@ class ScraperListView(GenerivView):
             exec_command = (container
                             .run_command('ls', f'/{scraper_name.name}/{folder}'))[0].decode('utf-8').split('\n')
 
+            protocol = 'http' if request.META.get('HTTP_HOST') else 'https'
+            host = request.get_host()
+
             scrapers = {
                 'total': len(exec_command),
+                'endpoint': f'{protocol}://{host}/scraper/{scraper_name.name}/',
                 'files': [{
                     'name': file
                 }
@@ -130,7 +141,7 @@ class ScraperListView(GenerivView):
         try:
             scraper_name = request.user.scraper.get(name=path)
             container = Container().get_container(scraper_name.name)
-  
+
             scraper = Scraper(container)
             folder = scraper.get_scraper_folder(scraper_name.name)
 
@@ -154,5 +165,3 @@ class ScraperListView(GenerivView):
 
         except Exception:
             return Response(status=400)
-
-

@@ -7,7 +7,6 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("company", "0011_alter_dataset_date"),
         ("jobs", "0005_alter_job_job_link"),
     ]
 

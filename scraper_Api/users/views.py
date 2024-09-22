@@ -227,6 +227,6 @@ class DeleteUser(APIView):
         user_delete = request.data.get('email')
         if user.is_superuser:
             user_delete = User.objects.get(email=user_delete)
-            # user_delete.delete()
+            user_delete.delete()
             return Response(status=200)
         return Response(status=401)

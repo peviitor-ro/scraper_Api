@@ -20,15 +20,19 @@ class LoginRegisterView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        user = request.data.get('email')
 
-        user = serializer.save()
-
-        refresh = RefreshToken.for_user(user)
-        self.send_authorization_mail(user, refresh.access_token)
-
-        return Response(status=201)
+        if not user:
+            return Response(status=400)
+        
+        try:
+            user = User.objects.get(email=user)
+            refresh = RefreshToken.for_user(user)
+            self.send_authorization_mail(user, refresh.access_token)
+            return Response(status=200)
+        
+        except User.DoesNotExist:
+            return Response(status=404)
 
     def send_authorization_mail(self, user, token):
         template = 'email.html'
@@ -51,6 +55,18 @@ class LoginRegisterView(APIView):
             recipient_list=recipient_list,
             html_message=message,
         )
+
+class AddUser(APIView):
+    def post(self, request):
+        if not request.user.is_superuser:
+            return Response(status=401)
+
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.save()
+
+        return Response(status=201)
 
 
 @permission_classes([AllowAny])
@@ -173,8 +189,8 @@ class UsersCompany(APIView):
                 scraper['selected'] = user_get_scrapers.filter(
                     name=scraper['name']).exists()
 
-        users = User.objects.all().values(
-            'email', 'is_staff', 'is_superuser').exclude(email=user.email).exclude(is_superuser=True)
+        users = User.objects.all().filter(is_superuser=False).order_by('email').values(
+            'email', 'is_staff', 'is_superuser').exclude(email=user.email)
 
         response = {
             "is_superuser": user.is_superuser,
@@ -203,4 +219,14 @@ class UsersCompany(APIView):
             response = serializer.update(data=data)
             return response
 
+        return Response(status=401)
+    
+class DeleteUser(APIView):
+    def post(self, request):
+        user = request.user
+        user_delete = request.data.get('email')
+        if user.is_superuser:
+            user_delete = User.objects.get(email=user_delete)
+            # user_delete.delete()
+            return Response(status=200)
         return Response(status=401)

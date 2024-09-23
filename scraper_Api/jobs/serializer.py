@@ -53,6 +53,10 @@ class JobAEditSerializer(JobAddSerializer):
             instance, _ = Job.objects.update_or_create(
                 job_link=validated_data['job_link'], defaults=validated_data)
             instance.edited = True
+
+            if instance.published:
+                instance.delete()
+                instance.publish()
             instance.save()
             return instance
 

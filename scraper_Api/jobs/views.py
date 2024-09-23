@@ -16,7 +16,7 @@ from .serializer import (
 )
 
 from company.serializers import CompanySerializer
-
+from django.utils.timezone import datetime
 from pysolr import Solr
 import os
 
@@ -34,6 +34,8 @@ class JobView(object):
                     return Response(JOB_NOT_FOUND)
 
                 setattr(job_obj, attribute, not getattr(job_obj, attribute))
+                job_obj.date = datetime.now()
+                job_obj.publish()
                 job_obj.save()
 
             return Response({"message": f"Job {attribute}"})
@@ -71,7 +73,7 @@ class JobView(object):
 class AddScraperJobs(APIView, JobView):
     def post(self, request):
         jobs = self.transformed_jobs(request.data)
-        
+
         if not jobs:
             return Response(status=400)
 
@@ -103,7 +105,7 @@ class AddScraperJobs(APIView, JobView):
 
         company_instance = Company.objects.get(company=company)
         jobs = Job.objects.filter(company=company_instance).count()
-        
+
         DataSet.objects.update_or_create(
             company=company_instance, date=current_date, defaults={
                 "data": jobs}
@@ -257,6 +259,6 @@ class SyncronizeJobs(APIView):
         jobs = Job.objects.filter(company=company_instance, published=True)
 
         for job in jobs:
-            job.save()
+            job.publish()
 
         return Response({"message": "Jobs synchronized"})

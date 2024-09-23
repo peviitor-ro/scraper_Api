@@ -17,7 +17,7 @@ class JobSerializer(serializers.ModelSerializer):
 
         try:
             solr = pysolr.Solr(url)
-            company = obj.company
+            company = str(obj.company)
 
             query = f'id:{company} OR id:{company.lower()} OR id:{company.upper()} OR id:{company.capitalize()}'
             results = solr.search(query, **{

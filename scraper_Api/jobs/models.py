@@ -1,7 +1,6 @@
 import hashlib
 from django.db import models
 from company.models import Company
-from django.utils.timezone import datetime
 from dotenv import load_dotenv
 import os
 from rest_framework.response import Response
@@ -13,7 +12,7 @@ DATABASE_SOLR = os.getenv("DATABASE_SOLR")
 
 class Job(models.Model):
     company = models.ForeignKey(
-        Company, on_delete=models.CASCADE, related_name="Company"
+        Company, on_delete=models.CASCADE, related_name="jobs"
     )
     country = models.TextField()
     city = models.TextField(blank=True)
@@ -33,26 +32,19 @@ class Job(models.Model):
         hash_object = hashlib.md5(self.job_link.encode())
         return hash_object.hexdigest()
 
-    def save(self, *args, **kwargs):
-        if self.published:
-            if not self.date:
-                self.date = datetime.now()
-            self.publish()
-        super(Job, self).save(*args, **kwargs)
-
     def delete(self, *args, **kwargs):
         url = DATABASE_SOLR + "/solr/jobs"
         solr = pysolr.Solr(url=url)
+
         solr.delete(q=f'job_link:"{self.job_link}"')
-        solr.commit(expungeDeletes=True) 
-        
+        solr.commit(expungeDeletes=True)
+
         super(Job, self).delete(*args, **kwargs)
 
-        
-
     def publish(self):
-        city = city = set(x.strip().split(" ")[0]
-                          for x in self.city.split(","))
+        city = set(x.strip()
+                   for x in self.city.split(","))
+
         url = DATABASE_SOLR + "/solr/jobs"
 
         try:
@@ -73,5 +65,3 @@ class Job(models.Model):
             return Response(status=200)
         except pysolr.SolrError as e:
             return Response(status=400, data=e)
-        
-

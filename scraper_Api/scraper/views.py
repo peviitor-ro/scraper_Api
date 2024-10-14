@@ -84,7 +84,7 @@ class ScraperRemoveView(GenerivView):
             Container().remove_container(scraper.name)
             scraper.delete()
 
-            return Response(status=200)
+            return Response(status=200, data={'success': True})
         except Exception:
             return Response(status=400)
 

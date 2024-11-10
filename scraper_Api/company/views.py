@@ -77,7 +77,7 @@ class AddCompany(APIView):
         if companies.exists():
             return Response(status=400)
 
-        serializer = self.serializer_class(data=validated_data)
+        serializer = self.serializer_class(data=validated_data, context={"request": request})
 
         if serializer.is_valid():
             company = serializer.save()
@@ -93,20 +93,19 @@ class UpdateCompany(APIView):
     def post(self, request):
         user = request.user
         company = request.data.get("company")
-        user_companies = user.company.all()
-
-        if user_companies.filter(company=company.title()).exists():
-            company = user_companies.get(company=company.title())
+       
+        try:
+            update = request.data.get("update") or company
+            user_companies = user.company.get(company=company.title())
             serializer = self.serializer_class(
-                company, data=request.data, partial=True)
+                user_companies, data=update, partial=True, context={"request": request})
 
             if serializer.is_valid():
                 serializer.save()
                 return Response(status=200)
-            else:
-                return Response(serializer.errors, status=400)
-        else:
-            return Response(status=401)
+        except Company.DoesNotExist:
+            return Response(status=400)
+
 
 
 class DeleteCompany(APIView):

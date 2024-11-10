@@ -22,23 +22,13 @@ class JobAddSerializer(serializers.ModelSerializer):
         for element in remote_elements:
             validate.to_internal_value(element.lower())
 
-        max_retries = 5
-        retry_delay = 0.5
-        for retry in range(max_retries):
-            try:
-                with transaction.atomic():
-                    instance, _ = Job.objects.get_or_create(
-                        job_link=validated_data['job_link'], defaults=validated_data)
-                    if not instance.edited:
-                        for key, value in validated_data.items():
-                            setattr(instance, key, value)
-                    instance.save()
-                    return instance
-
-            except Exception as e:
-                if retry == max_retries - 1:
-                    raise e
-                time.sleep(retry_delay)
+        instance, _ = Job.objects.get_or_create(
+            job_link=validated_data['job_link'], defaults=validated_data)
+        if not instance.edited:
+            for key, value in validated_data.items():
+                setattr(instance, key, value)
+        instance.save()
+        return instance
 
     def get_job_id(self, obj):
         return obj.getJobId

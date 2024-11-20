@@ -79,6 +79,7 @@ class AddScraperJobs(APIView, JobView):
 
         posted_jobs = []
 
+        
         for job in jobs:
             company = self.transform_data(job.get("company")).title()
 
@@ -92,14 +93,19 @@ class AddScraperJobs(APIView, JobView):
 
             job["company"] = company_instance.id
 
-            job_serializer = JobAddSerializer(
-                data=job, context={"request": request})
+            job_link = self.transform_data(job.get("job_link"))
 
-            job_serializer.is_valid(raise_exception=True)
 
-            job_serializer.save()
+            if not Job.objects.filter(job_link=job_link).exists():
 
-            posted_jobs.append(job_serializer.data)
+                job_serializer = JobAddSerializer(
+                    data=job, context={"request": request})
+
+                job_serializer.is_valid(raise_exception=True)
+
+                job_serializer.save()
+
+                posted_jobs.append(job_serializer.data)
 
         current_date = datetime.now()
 
@@ -110,6 +116,7 @@ class AddScraperJobs(APIView, JobView):
             company=company_instance, date=current_date, defaults={
                 "data": jobs}
         )
+        
         return Response(posted_jobs)
 
     @property

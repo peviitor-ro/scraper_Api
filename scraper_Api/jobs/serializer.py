@@ -2,7 +2,6 @@ from rest_framework import serializers
 from django.db import transaction
 from datetime import datetime
 from .models import Job
-import time
 
 
 class JobAddSerializer(serializers.ModelSerializer):

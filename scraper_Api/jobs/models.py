@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import os
 from rest_framework.response import Response
 import pysolr
+import re
+import html
 
 load_dotenv()
 DATABASE_SOLR = os.getenv("DATABASE_SOLR")
@@ -31,12 +33,21 @@ class Job(models.Model):
     def getJobId(self):
         hash_object = hashlib.md5(self.job_link.encode())
         return hash_object.hexdigest()
+    
+    @staticmethod
+    def _escape_solr_query(value):
+        value = html.escape(value)  
+        special_chars = r'(\+|\-|\&|\||\!|\(|\)|\{|\}|\[|\]|\^|\"|\~|\*|\?|\:|\\|=)'
+        escaped_value = re.sub(special_chars, r'\\\1', value)
+        return escaped_value
 
     def delete(self, *args, **kwargs):
         url = DATABASE_SOLR + "/solr/jobs"
         solr = pysolr.Solr(url=url)
 
-        solr.delete(q=f'job_link:"{self.job_link}"')
+        job_link_safe = self._escape_solr_query(self.job_link)
+
+        solr.delete(q=f'job_link:"{job_link_safe}"')
         solr.commit(expungeDeletes=True)
 
         super(Job, self).delete(*args, **kwargs)

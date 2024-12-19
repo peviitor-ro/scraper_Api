@@ -7,6 +7,8 @@ from rest_framework.response import Response
 import pysolr
 import re
 import html
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 load_dotenv()
 DATABASE_SOLR = os.getenv("DATABASE_SOLR")
@@ -40,7 +42,7 @@ class Job(models.Model):
         special_chars = r'(\+|\-|\&|\||\!|\(|\)|\{|\}|\[|\]|\^|\"|\~|\*|\?|\:|\\|=)'
         escaped_value = re.sub(special_chars, r'\\\1', value)
         return escaped_value
-
+        
     def delete(self, *args, **kwargs):
         url = DATABASE_SOLR + "/solr/jobs"
         solr = pysolr.Solr(url=url)
@@ -76,3 +78,10 @@ class Job(models.Model):
             return Response(status=200)
         except pysolr.SolrError as e:
             return Response(status=400, data=e)
+        
+# Delete related jobs when a company is deleted
+@receiver(pre_delete, sender=Company)
+def delete_related_jobs(sender, instance, **kwargs):
+    jobs = Job.objects.filter(company=instance)
+    for job in jobs:
+        job.delete()

@@ -71,6 +71,11 @@ CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
+    # external apps
+    'django_apscheduler',
+    'daphne',
+
+    # Internal apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -85,9 +90,6 @@ INSTALLED_APPS = [
     # Cors
     'corsheaders',
 
-    #external apps
-    'django_apscheduler',
-
     # Apps
     'scraper',
     'company',
@@ -96,6 +98,7 @@ INSTALLED_APPS = [
     'orase',
     'newsletter',
     'mobile',
+    'notifications',
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'
@@ -166,6 +169,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'scraper_Api.wsgi.application'
+ASGI_APPLICATION = 'scraper_Api.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 
 # Database
@@ -257,6 +270,8 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 
 

@@ -17,4 +17,4 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'scraper_Api.settings')
 
 application = get_wsgi_application()
 
-start()
+# start()

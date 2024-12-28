@@ -17,11 +17,9 @@ def clean():
 
     companies = Company.objects.all()
     for company in companies:
-        data = DataSet.objects.filter(company=company).first()
-
+        data = DataSet.objects.filter(company=company).last()
         if data is None or (today - data.date).days > 3:
-              print(f"Deleting {company.company}")
-              company.delete()
+            company.delete()
 
 
 def start():

@@ -18,7 +18,7 @@ def clean():
     companies = Company.objects.all()
     for company in companies:
         data = DataSet.objects.filter(company=company).last()
-        if data is None or (today - data.date).days > 3:
+        if data is None or (today - data.date).days >= 2:
             company.delete()
 
 
@@ -26,7 +26,7 @@ def start():
     try:
         scheduler = BackgroundScheduler()
         scheduler.add_jobstore(DjangoJobStore(), "clean")
-        scheduler.add_job(clean, 'interval', days=3, jobstore='clean')
+        scheduler.add_job(clean, 'interval', days=1, jobstore='clean')
         register_events(scheduler)
         scheduler.start()
 

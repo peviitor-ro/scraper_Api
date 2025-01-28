@@ -2,12 +2,12 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from utils.pagination import CustomPagination
-from .serializer import JobSerializer
+from .serializer import JobSerializer, CompanySerializer
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
-import json
 
 from jobs.models import Job
+from company.models import Company
 
 
 @permission_classes([AllowAny])
@@ -19,6 +19,7 @@ class GetJobView(APIView):
         search_query = request.GET.get("search") or None
         cities = request.GET.get("cities") or None
         counties = request.GET.get("counties") or None
+        companies = request.GET.get("companies") or None
         remote = request.GET.get("remote") or None
 
         filter_search = Q(published=True)
@@ -34,6 +35,19 @@ class GetJobView(APIView):
                 filter_search &= Q(city__icontains=city) & Q(county__icontains=county)
 
             filter_search |= Q(city__in=cities_lst) & Q(county__in=counties_lst)
+        elif cities:
+            cities_lst = cities.split(",")
+            filter_search &= Q(city__in=cities_lst)
+        elif counties:
+            counties_lst = counties.split(",")
+            filter_search &= Q(county__in=counties_lst)
+
+        if companies:
+            companies_lst = companies.split(",")
+            for company in companies_lst:
+                company_id = Company.objects.get(company=company).id
+                filter_search &= Q(company=company_id)
+            
 
         if remote:
             remote_lst = remote.split(",")
@@ -46,6 +60,23 @@ class GetJobView(APIView):
         serializer = self.serializer_class(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+@permission_classes([AllowAny])
+class GetCompanies(APIView):
+    serializer_class = CompanySerializer
+    pagination_class = CustomPagination
+    def get(self, _):
+        search_query = self.request.GET.get("search") or None
+        filter_search = Q()
+
+        if search_query:
+            filter_search &= Q(company__icontains=search_query)
+
+        companies = Company.objects.filter(filter_search)
+        paginator = self.pagination_class()
+        paginator.page_size = 50
+        result_page = paginator.paginate_queryset(companies, self.request)
+        companies = self.serializer_class(result_page, many=True)
+        return paginator.get_paginated_response(companies.data)
 
 @permission_classes([AllowAny])
 class GetTotalJobs(APIView):

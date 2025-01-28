@@ -1,6 +1,7 @@
 from rest_framework import serializers
 import pysolr
 from jobs.models import Job
+from company.models import Company
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -30,4 +31,16 @@ class JobSerializer(serializers.ModelSerializer):
     
     def get_company_name(self, obj):
         return obj.company.company
+    
+
+class JobListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        return [item.company for item in data]
+    
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ('company')
+        list_serializer_class = JobListSerializer
+    
 

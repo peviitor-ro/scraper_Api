@@ -31,7 +31,7 @@ def start():
         return
 
     try:
-        scheduler.add_job(clean, 'interval', days=12, jobstore='clean')
+        scheduler.add_job(clean, 'interval', days=1, jobstore='clean')
         register_events(scheduler)
         scheduler.start()
         print("Scheduler started successfully!", file=sys.stdout)

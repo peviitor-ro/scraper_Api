@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from datetime import datetime
+from requests.auth import HTTPBasicAuth
 
 from .constants import JOB_SORT_OPTIONS
 
@@ -258,7 +259,10 @@ class SyncronizeJobs(APIView):
             return Response(status=400)
 
         url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
-        solr = Solr(url=url)
+        username = os.getenv("DATABASE_SOLR_USERNAME")
+        password = os.getenv("DATABASE_SOLR_PASSWORD")
+
+        solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
         solr.delete(q=f"company:{company}")
         solr.commit(expungeDeletes=True)
 

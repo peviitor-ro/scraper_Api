@@ -4,6 +4,7 @@ from company.models import Company
 from dotenv import load_dotenv
 import os
 from rest_framework.response import Response
+from requests.auth import HTTPBasicAuth
 import pysolr
 import re
 import html
@@ -45,7 +46,10 @@ class Job(models.Model):
         
     def delete(self, *args, **kwargs):
         url = DATABASE_SOLR + "/solr/jobs"
-        solr = pysolr.Solr(url=url)
+        username = os.getenv("DATABASE_SOLR_USERNAME")
+        password = os.getenv("DATABASE_SOLR_PASSWORD")
+
+        solr = pysolr.Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
 
         job_link_safe = self._escape_solr_query(self.job_link)
 
@@ -59,9 +63,11 @@ class Job(models.Model):
                    for x in self.city.split(","))
 
         url = DATABASE_SOLR + "/solr/jobs"
+        username = os.getenv("DATABASE_SOLR_USERNAME")
+        password = os.getenv("DATABASE_SOLR_PASSWORD")
 
         try:
-            solr = pysolr.Solr(url=url)
+            solr = pysolr.Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
             solr.add([
                 {
                     "job_link": self.job_link,
@@ -85,3 +91,5 @@ def delete_related_jobs(sender, instance, **kwargs):
     jobs = Job.objects.filter(company=instance)
     for job in jobs:
         job.delete()
+
+    

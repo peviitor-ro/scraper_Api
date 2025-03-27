@@ -2,7 +2,7 @@ from django_apscheduler.jobstores import DjangoJobStore, register_events
 from apscheduler.schedulers.background import BackgroundScheduler
 from .models import Company, DataSet
 from datetime import datetime
-from django.db import connection
+from django.db import transaction
 from django_apscheduler.models import DjangoJob
 import sys
 
@@ -13,14 +13,9 @@ DjangoJob.objects.all().delete()
 scheduler = BackgroundScheduler()
 scheduler.add_jobstore(DjangoJobStore(), "clean")
 
-
+@transaction.atomic
 def clean():
-    """ Șterge companiile care nu au date recente (ultimele 2 zile). """
     today = datetime.now().date()
-
-    # Verifică și reînnoiește conexiunea la baza de date
-    if connection.connection and not connection.is_usable():
-        connection.close()
 
     for company in Company.objects.all():
         last_data = DataSet.objects.filter(company=company).last()

@@ -162,3 +162,5 @@ cython_debug/
 
 scrapers/
 .DS_Store
+images/
+root/

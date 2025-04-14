@@ -1,9 +1,11 @@
+from django.db import connection
 import sys
 from django_apscheduler.models import DjangoJob
 from datetime import datetime
 from .models import Company, DataSet
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
+from django.core.paginator import Paginator
 
 
 # Șterge toate joburile existente din baza de date pentru a evita duplicările
@@ -15,15 +17,21 @@ scheduler.add_jobstore(DjangoJobStore(), "clean")
 
 
 def clean():
-    """ Șterge companiile care nu au date recente (ultimele 2 zile). """
+    """Șterge companiile fără date recente, lot cu lot."""
     today = datetime.now().date()
-
-    for company in Company.objects.all():
-        last_data = DataSet.objects.filter(company=company).last()
-        if not last_data or (today - last_data.date).days >= 2:
-
-            company.delete()
-            print(f"Deleted company: {company.company}", file=sys.stdout)
+    
+    try:
+        companies = Company.objects.all().order_by('id')
+        paginator = Paginator(companies, 100)  
+        for page_number in paginator.page_range:
+            page = paginator.page(page_number)
+            for company in page.object_list:
+                last_data = DataSet.objects.filter(company=company).last()
+                if not last_data or (today - last_data.date).days >= 2:
+                    company.delete()
+                    print(f"Deleted company: {company.company}", file=sys.stdout)
+    finally:
+        connection.close() 
 
 
 def start():

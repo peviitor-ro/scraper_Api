@@ -11,11 +11,6 @@ from django.core.paginator import Paginator
 # Șterge toate joburile existente din baza de date pentru a evita duplicările
 DjangoJob.objects.all().delete()
 
-# Inițializează un singur obiect de scheduler global
-scheduler = BackgroundScheduler()
-scheduler.add_jobstore(DjangoJobStore(), "clean")
-
-
 def clean():
     """Șterge companiile fără date recente, lot cu lot."""
     today = datetime.now().date()
@@ -36,13 +31,15 @@ def clean():
 
 def start():
     """ Pornește APScheduler cu jobul `clean` care rulează la fiecare 12 ore. """
-    global scheduler
+    scheduler = BackgroundScheduler()
+    scheduler.add_jobstore(DjangoJobStore(), "default")
+
     if scheduler.running:
         print("Scheduler already running.", file=sys.stdout)
         return
 
     try:
-        scheduler.add_job(clean, 'interval', days=1, jobstore='clean')
+        scheduler.add_job(clean, 'interval', minutes=1, jobstore='default', id='clean_job', replace_existing=True)
 
         register_events(scheduler)
         scheduler.start()

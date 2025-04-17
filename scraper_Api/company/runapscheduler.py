@@ -39,7 +39,7 @@ def start():
         return
 
     try:
-        scheduler.add_job(clean, 'interval', minutes=1, jobstore='default', id='clean_job', replace_existing=True)
+        scheduler.add_job(clean, 'interval', days=1, jobstore='default', id='clean_job', replace_existing=True)
 
         register_events(scheduler)
         scheduler.start()

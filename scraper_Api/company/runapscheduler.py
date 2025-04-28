@@ -9,6 +9,9 @@ from django_apscheduler.jobstores import DjangoJobStore, register_events
 from django.core.paginator import Paginator
 from .models import Company, DataSet
 
+
+DjangoJob.objects.all().delete()
+
 # Configurare logging pentru debugging
 logging.basicConfig(level=logging.DEBUG)
 

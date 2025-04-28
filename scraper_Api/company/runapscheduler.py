@@ -23,7 +23,7 @@ def clean():
     today = datetime.now().date()
 
     try:
-        companies = Company.objects.all().order_by('id').iterator()
+        companies = Company.objects.all().order_by('id')
         paginator = Paginator(companies, 100)
 
         for page_number in paginator.page_range:

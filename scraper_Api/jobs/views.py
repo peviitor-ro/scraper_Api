@@ -22,6 +22,9 @@ from pysolr import Solr
 import os
 
 JOB_NOT_FOUND = {"message": "Job not found"}
+url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
+username = os.getenv("DATABASE_SOLR_USERNAME")
+password = os.getenv("DATABASE_SOLR_PASSWORD")
 
 
 class JobView(object):
@@ -275,10 +278,6 @@ class SyncronizeJobs(APIView):
         if not company:
             return Response(status=400)
 
-        url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
-        username = os.getenv("DATABASE_SOLR_USERNAME")
-        password = os.getenv("DATABASE_SOLR_PASSWORD")
-
         solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
         solr.delete(q=f"company:{company}")
         solr.commit(expungeDeletes=True)
@@ -290,3 +289,39 @@ class SyncronizeJobs(APIView):
             job.publish()
 
         return Response({"message": "Jobs synchronized"})
+    
+
+class flush_and_populate(APIView):
+    solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
+    def post(self, request):
+        user = request.user
+
+        if not user.is_superuser:
+            return Response(status=401)
+        
+        try:
+            self.solr.delete(q="*:*")
+            self.solr.commit(expungeDeletes=True)
+            jobs = Job.objects.filter(published=True)
+            
+            jobs = [
+                {
+                    "id": job.getJobId,
+                    "job_link": job.job_link,
+                    "job_title": job.job_title,
+                    "company": job.company.company,
+                    "country": job.country.split(","),
+                    "city": job.city.split(","),
+                    "county": job.county.split(","),
+                    "remote": job.remote.split(","),
+                }
+                for job in jobs
+            ]
+
+            self.solr.add(jobs)
+            self.solr.commit(expungeDeletes=True)
+
+            return Response(200)
+        except Exception as e:
+            return Response(status=400)
+

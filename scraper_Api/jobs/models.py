@@ -13,6 +13,8 @@ from django.dispatch import receiver
 
 load_dotenv()
 DATABASE_SOLR = os.getenv("DATABASE_SOLR")
+username = os.getenv("DATABASE_SOLR_USERNAME")
+password = os.getenv("DATABASE_SOLR_PASSWORD")
 
 
 class Job(models.Model):
@@ -46,9 +48,7 @@ class Job(models.Model):
         
     def delete(self, *args, **kwargs):
         url = DATABASE_SOLR + "/solr/jobs"
-        username = os.getenv("DATABASE_SOLR_USERNAME")
-        password = os.getenv("DATABASE_SOLR_PASSWORD")
-
+    
         solr = pysolr.Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
 
         job_link_safe = self._escape_solr_query(self.job_link)
@@ -63,9 +63,6 @@ class Job(models.Model):
                    for x in self.city.split(","))
 
         url = DATABASE_SOLR + "/solr/jobs"
-        username = os.getenv("DATABASE_SOLR_USERNAME")
-        password = os.getenv("DATABASE_SOLR_PASSWORD")
-
         try:
             solr = pysolr.Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
             solr.add([

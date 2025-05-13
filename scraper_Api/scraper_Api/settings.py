@@ -42,6 +42,7 @@ ALLOWED_HOSTS = [
     'dev.laurentiumarian.ro',
     'api.laurentiumarian.ro',
     '192.168.0.156',
+    '81.180.202.206',
 ]
 
 CSRF_TRUSTED_ORIGINS = [

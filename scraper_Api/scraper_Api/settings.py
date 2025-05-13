@@ -195,7 +195,7 @@ DATABASES = {
         'CONN_MAX_AGE': 600,
         'CONN_HEALTH_CHECKS': True,
         'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'init_command': "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
             'charset': 'utf8mb4',
             'use_unicode': True,
         },
@@ -279,4 +279,23 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',  # Asigură-te că nivelul este setat corect
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Poți seta INFO, WARNING, ERROR etc.
+            'propagate': True,
+        },
+    },
+}

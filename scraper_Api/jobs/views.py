@@ -300,8 +300,7 @@ class flush_and_populate(APIView):
             return Response(status=401)
         
         try:
-            self.solr.delete(q="*:*")
-            self.solr.commit(expungeDeletes=True)
+            
             jobs = Job.objects.filter(published=True)
             
             jobs = [
@@ -318,8 +317,12 @@ class flush_and_populate(APIView):
                 for job in jobs
             ]
 
-            self.solr.add(jobs)
+            self.solr.delete(q="*:*")
             self.solr.commit(expungeDeletes=True)
+
+            if jobs:
+                self.solr.add(jobs)
+                self.solr.commit(expungeDeletes=True)
 
             return Response(200)
         except Exception as e:

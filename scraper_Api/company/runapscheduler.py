@@ -8,6 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 from django.core.paginator import Paginator
 from .models import Company, DataSet
+from jobs.models import Job
 
 
 DjangoJob.objects.all().delete()
@@ -18,6 +19,13 @@ logging.basicConfig(level=logging.DEBUG)
 # Inițializare globală APScheduler
 scheduler = BackgroundScheduler()
 scheduler.add_jobstore(DjangoJobStore(), "default")
+
+
+def unpublish_jobs(company):
+    jobs = Job.objects.filter(company=company)
+    for job in jobs:
+        if job.published:
+            job.unpublish()
 
 
 def clean():
@@ -34,8 +42,12 @@ def clean():
             for company in page.object_list:
                 last_data = DataSet.objects.filter(company=company).last()
                 if not last_data or (today - last_data.date).days >= 2:
-                    company.delete()
-                    logging.info(f"Deleted company: {company.company}")
+                    if company.source:
+                        company.delete()
+                        logging.info(f"Deleted company with source: {company.company}")
+                    else:
+                        unpublish_jobs(company)
+                        logging.info(f"Unpublished jobs for company: {company.company}")
 
     except Exception as e:
         logging.error(f"Eroare în funcția clean: {e}")

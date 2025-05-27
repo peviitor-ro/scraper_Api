@@ -40,11 +40,14 @@ class Job(models.Model):
         return hash_object.hexdigest()
         
     def delete(self, *args, **kwargs):
-        solr.delete(q=f'id:"{self.getJobId}"')
-        solr.commit()
-
-        super(Job, self).delete(*args, **kwargs)
-
+        if self.published:
+            try:
+                solr.delete(q=f'id:"{self.getJobId}"')
+                solr.commit(expungeDeletes=True)
+            except pysolr.SolrError as e:
+                return Response(status=400, data=e)
+        super().delete(*args, **kwargs)
+        
     def publish(self):
         city = set(x.strip()
                    for x in self.city.split(","))
@@ -66,12 +69,26 @@ class Job(models.Model):
             return Response(status=200)
         except pysolr.SolrError as e:
             return Response(status=400, data=e)
+    
+    def unpublish(self):
+        try:
+            job_id = self.getJobId
+            if job_id:
+                solr.delete(q=f'id:"{job_id}"')
+                solr.commit(expungeDeletes=True)
+                self.published = False
+                self.save()
+            else:
+                raise ValueError("Invalid Job ID")
+            return Response(status=200)
+        except pysolr.SolrError as e:
+            return Response(status=400, data=e)
         
-# Delete related jobs when a company is deleted
-@receiver(pre_delete, sender=Company)
-def delete_related_jobs(sender, instance, **kwargs):
-    jobs = Job.objects.filter(company=instance)
-    for job in jobs:
-        job.delete()
+# # Delete related jobs when a company is deleted
+# @receiver(pre_delete, sender=Company)
+# def delete_related_jobs(sender, instance, **kwargs):
+#     jobs = Job.objects.filter(company=instance)
+#     for job in jobs:
+#         job.delete()
 
     

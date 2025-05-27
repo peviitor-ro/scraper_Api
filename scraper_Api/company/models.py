@@ -3,6 +3,7 @@ from django.utils.timezone import datetime
 import os
 
 
+
 class Source(models.Model):
     """
     Sursa is a Django model representing a source with an associated image.
@@ -47,6 +48,12 @@ class Company(models.Model):
 
     def __str__(self):
         return self.company
+
+    def delete(self, using=None, keep_parents=False):
+        from jobs.models import Job
+        for job in Job.objects.filter(company=self):
+            job.delete()
+        super().delete(using=using, keep_parents=keep_parents)
     
 
 class DataSet(models.Model):

@@ -1,4 +1,3 @@
-import sys
 import logging
 import atexit
 from django.db import connection
@@ -34,20 +33,27 @@ def clean():
     today = datetime.now().date()
 
     try:
-        companies = Company.objects.all().order_by('id')
-        paginator = Paginator(companies, 100)
+        batch_size = 100
+        last_id = 0
+        while True:
+            companies = Company.objects.filter(
+                id__gt=last_id).order_by('id')[:batch_size]
+            if not companies:
+                break
 
-        for page_number in paginator.page_range:
-            page = paginator.page(page_number)
-            for company in page.object_list:
+            for company in companies:
+                last_id = company.id
                 last_data = DataSet.objects.filter(company=company).last()
                 if not last_data or (today - last_data.date).days >= 2:
                     if company.source:
                         company.delete()
-                        logging.info(f"Deleted company with source: {company.company}")
+                        logging.info(
+                            f"Compania {company.company} a fost ștearsă.")
                     else:
                         unpublish_jobs(company)
-                        logging.info(f"Unpublished jobs for company: {company.company}")
+                        logging.info(
+                            f"Joburile pentru compania {company.company} au fost dezpublicate.")
+        logging.info("Jobul clean() s-a încheiat cu succes!")
 
     except Exception as e:
         logging.error(f"Eroare în funcția clean: {e}")

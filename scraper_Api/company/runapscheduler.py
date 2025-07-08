@@ -1,13 +1,58 @@
 import logging
 import atexit
-from django.db import connection
 from django_apscheduler.models import DjangoJob
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
-from django.core.paginator import Paginator
 from .models import Company, DataSet
 from jobs.models import Job
+import pymysql
+from pymysql.err import OperationalError
+import time
+
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+
+def get_connection():
+    DB_NAME = os.getenv("DB_NAME")
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_HOST = os.getenv("DB_HOST")
+    DB_PORT = os.getenv("DB_PORT")
+
+    """Return a MySQL connection."""
+    return pymysql.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        port=int(DB_PORT),
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=True,
+    )
+
+
+def get_all_companies(retries=3, delay=2):
+    """Return all companies, cu retry logic pentru conexiuni pierdute."""
+    for i in range(retries):
+        try:
+            connection = get_connection()
+            connection.ping(reconnect=True)
+
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM company_company")
+                results = cursor.fetchall()
+                connection.close()
+                return results
+
+        except OperationalError as e:
+            print(f"[Retry {i + 1}] Conexiune pierdută: {e}")
+            time.sleep(delay)
+
+    raise OperationalError("Eroare: Nu s-a putut executa query-ul după retry-uri.")
 
 
 DjangoJob.objects.all().delete()
@@ -32,33 +77,21 @@ def clean():
     logging.info("Job clean() a început!")
     today = datetime.now().date()
 
-    try:
-        batch_size = 100
-        last_id = 0
-        while True:
-            companies = Company.objects.filter(
-                id__gt=last_id).order_by('id')[:batch_size]
-            if not companies:
-                break
+    companies = get_all_companies()
 
-            for company in companies:
-                last_id = company.id
-                last_data = DataSet.objects.filter(company=company).last()
-                if not last_data or (today - last_data.date).days >= 2:
-                    if company.source:
-                        company.delete()
-                        logging.info(
-                            f"Compania {company.company} a fost ștearsă.")
-                    else:
-                        unpublish_jobs(company)
-                        logging.info(
-                            f"Joburile pentru compania {company.company} au fost dezpublicate.")
-        logging.info("Jobul clean() s-a încheiat cu succes!")
-
-    except Exception as e:
-        logging.error(f"Eroare în funcția clean: {e}")
-    finally:
-        connection.close()  # Închide conexiunea MySQL pentru a evita "Broken pipe"
+    for company in companies:
+        company = Company.objects.filter(company=company['company']).first()
+        last_data = DataSet.objects.filter(company=company).last()
+        if not last_data or (today - last_data.date).days >= 2:
+            if company.source:
+                company.delete()
+                logging.info(
+                    f"Compania {company.company} a fost ștearsă.")
+            else:
+                unpublish_jobs(company)
+                logging.info(
+                    f"Joburile pentru compania {company.company} au fost dezpublicate.")
+    logging.info("Jobul clean() s-a încheiat cu succes!")
 
 
 def start():
@@ -88,3 +121,6 @@ def stop_scheduler():
 
 
 atexit.register(stop_scheduler)
+
+if __name__ == "__main__":
+    print(get_all_companies())

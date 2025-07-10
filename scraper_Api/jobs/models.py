@@ -1,18 +1,21 @@
-import hashlib
-from django.db import models
+from django.db.models.signals import pre_delete
+from rest_framework.response import Response
+from requests.auth import HTTPBasicAuth
+from django.dispatch import receiver
 from company.models import Company
 from dotenv import load_dotenv
-import os
-from rest_framework.response import Response
+from django.db import models
+import hashlib
 import pysolr
-import re
-import html
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
+import os
 
 load_dotenv()
 DATABASE_SOLR = os.getenv("DATABASE_SOLR")
+username = os.getenv("DATABASE_SOLR_USERNAME")
+password = os.getenv("DATABASE_SOLR_PASSWORD")
+url = DATABASE_SOLR + "/solr/jobs"
 
+solr = pysolr.Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5, always_commit=True)
 
 class Job(models.Model):
     company = models.ForeignKey(
@@ -21,7 +24,7 @@ class Job(models.Model):
     country = models.TextField()
     city = models.TextField(blank=True)
     county = models.TextField(blank=True)
-    job_link = models.CharField(max_length=300)
+    job_link = models.CharField(max_length=1000)
     job_title = models.TextField()
     remote = models.CharField(max_length=50, blank=True)
     edited = models.BooleanField(default=False)
@@ -35,35 +38,23 @@ class Job(models.Model):
     def getJobId(self):
         hash_object = hashlib.md5(self.job_link.encode())
         return hash_object.hexdigest()
-    
-    @staticmethod
-    def _escape_solr_query(value):
-        value = html.escape(value)  
-        special_chars = r'(\+|\-|\&|\||\!|\(|\)|\{|\}|\[|\]|\^|\"|\~|\*|\?|\:|\\|=)'
-        escaped_value = re.sub(special_chars, r'\\\1', value)
-        return escaped_value
         
     def delete(self, *args, **kwargs):
-        url = DATABASE_SOLR + "/solr/jobs"
-        solr = pysolr.Solr(url=url)
-
-        job_link_safe = self._escape_solr_query(self.job_link)
-
-        solr.delete(q=f'job_link:"{job_link_safe}"')
-        solr.commit(expungeDeletes=True)
-
-        super(Job, self).delete(*args, **kwargs)
-
+        if self.published:
+            try:
+                solr.delete(q=f'id:"{self.getJobId}"')
+                solr.commit(expungeDeletes=True)
+            except pysolr.SolrError as e:
+                return Response(status=400, data=e)
+        super().delete(*args, **kwargs)
+        
     def publish(self):
         city = set(x.strip()
                    for x in self.city.split(","))
-
-        url = DATABASE_SOLR + "/solr/jobs"
-
         try:
-            solr = pysolr.Solr(url=url)
             solr.add([
                 {
+                    "id": self.getJobId,
                     "job_link": self.job_link,
                     "job_title": self.job_title,
                     "company": self.company.company,
@@ -78,10 +69,26 @@ class Job(models.Model):
             return Response(status=200)
         except pysolr.SolrError as e:
             return Response(status=400, data=e)
+    
+    def unpublish(self):
+        try:
+            job_id = self.getJobId
+            if job_id:
+                solr.delete(q=f'id:"{job_id}"')
+                solr.commit(expungeDeletes=True)
+                self.published = False
+                self.save()
+            else:
+                raise ValueError("Invalid Job ID")
+            return Response(status=200)
+        except pysolr.SolrError as e:
+            return Response(status=400, data=e)
         
-# Delete related jobs when a company is deleted
-@receiver(pre_delete, sender=Company)
-def delete_related_jobs(sender, instance, **kwargs):
-    jobs = Job.objects.filter(company=instance)
-    for job in jobs:
-        job.delete()
+# # Delete related jobs when a company is deleted
+# @receiver(pre_delete, sender=Company)
+# def delete_related_jobs(sender, instance, **kwargs):
+#     jobs = Job.objects.filter(company=instance)
+#     for job in jobs:
+#         job.delete()
+
+    

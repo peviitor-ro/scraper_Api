@@ -12,6 +12,7 @@ from .serializers import DataSetSerializer
 from jobs.models import Job
 from company.models import Company
 from pysolr import Solr
+from requests.auth import HTTPBasicAuth
 
 from dotenv import load_dotenv
 import os
@@ -149,7 +150,10 @@ class ClearCompany(APIView):
             job.save()
 
         url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
-        solr = Solr(url=url)
+        username = os.getenv("DATABASE_SOLR_USERNAME")
+        password = os.getenv("DATABASE_SOLR_PASSWORD")
+
+        solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
         solr.delete(q=f"company:{company.company}")
         solr.commit(expungeDeletes=True)
 

@@ -3,11 +3,12 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from datetime import datetime
+from requests.auth import HTTPBasicAuth
 
 from .constants import JOB_SORT_OPTIONS
 
 from .models import Job
-from company.models import Company, DataSet
+from company.models import Company, DataSet, Source
 from utils.pagination import CustomPagination
 from .serializer import (
     GetJobSerializer,
@@ -21,6 +22,9 @@ from pysolr import Solr
 import os
 
 JOB_NOT_FOUND = {"message": "Job not found"}
+url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
+username = os.getenv("DATABASE_SOLR_USERNAME")
+password = os.getenv("DATABASE_SOLR_PASSWORD")
 
 
 class JobView(object):
@@ -46,6 +50,7 @@ class JobView(object):
         data = []
         if isinstance(jobs, list) and len(jobs) > 0:
             for job in jobs:
+                source = job.get("source")
                 job_obj = {
                     "job_link": self.transform_data(job.get("job_link")),
                     "job_title": self.transform_data(job.get("job_title")),
@@ -55,6 +60,13 @@ class JobView(object):
                     "remote": self.transform_data(job.get("remote")),
                     "company": self.transform_data(job.get("company")).title(),
                 }
+
+                if source:
+                    source_obj = Source.objects.filter(sursa=source).first()
+                    if source_obj:
+                        job_obj["source"] = source_obj.id
+                    else:
+                        job_obj["source"] = None
                 data.append(job_obj)
         return data
 
@@ -72,52 +84,61 @@ class JobView(object):
 
 class AddScraperJobs(APIView, JobView):
     def post(self, request):
-        jobs = self.transformed_jobs(request.data)
+        try:
+            jobs = self.transformed_jobs(request.data)
 
-        if not jobs:
+            if not jobs:
+                return Response(status=400)
+
+            posted_jobs = []
+
+            
+            for job in jobs:
+                company = self.transform_data(job.get("company")).title()
+
+                company_obj = {"company": company}
+
+                if job.get("source"):
+                    company_obj["source"] = job.get("source")
+
+                company_serializer = CompanySerializer(data=company_obj,)
+
+                company_serializer.is_valid(raise_exception=True)
+                company_instance = company_serializer.save()
+
+                user = request.user
+                user.company.add(company_instance)
+
+                job["company"] = company_instance.id
+
+                job_link = self.transform_data(job.get("job_link"))
+
+
+                if not Job.objects.filter(job_link=job_link).exists():
+
+                    job_serializer = JobAddSerializer(
+                        data=job, context={"request": request})
+
+                    job_serializer.is_valid(raise_exception=True)
+
+                    job_serializer.save()
+
+                    posted_jobs.append(job_serializer.data)
+
+            current_date = datetime.now()
+
+            company_instance = Company.objects.get(company=company)
+            jobs = Job.objects.filter(company=company_instance).count()
+
+            DataSet.objects.update_or_create(
+                company=company_instance, date=current_date, defaults={
+                    "data": jobs}
+            )
+            
+            return Response(posted_jobs)
+        except Exception as e:
+            print(e)
             return Response(status=400)
-
-        posted_jobs = []
-
-        
-        for job in jobs:
-            company = self.transform_data(job.get("company")).title()
-
-            company_serializer = CompanySerializer(data={"company": company},)
-
-            company_serializer.is_valid(raise_exception=True)
-            company_instance = company_serializer.save()
-
-            user = request.user
-            user.company.add(company_instance)
-
-            job["company"] = company_instance.id
-
-            job_link = self.transform_data(job.get("job_link"))
-
-
-            if not Job.objects.filter(job_link=job_link).exists():
-
-                job_serializer = JobAddSerializer(
-                    data=job, context={"request": request})
-
-                job_serializer.is_valid(raise_exception=True)
-
-                job_serializer.save()
-
-                posted_jobs.append(job_serializer.data)
-
-        current_date = datetime.now()
-
-        company_instance = Company.objects.get(company=company)
-        jobs = Job.objects.filter(company=company_instance).count()
-
-        DataSet.objects.update_or_create(
-            company=company_instance, date=current_date, defaults={
-                "data": jobs}
-        )
-        
-        return Response(posted_jobs)
 
     @property
     def delete(self):
@@ -257,8 +278,7 @@ class SyncronizeJobs(APIView):
         if not company:
             return Response(status=400)
 
-        url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
-        solr = Solr(url=url)
+        solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
         solr.delete(q=f"company:{company}")
         solr.commit(expungeDeletes=True)
 
@@ -269,3 +289,42 @@ class SyncronizeJobs(APIView):
             job.publish()
 
         return Response({"message": "Jobs synchronized"})
+    
+
+class flush_and_populate(APIView):
+    solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
+    def post(self, request):
+        user = request.user
+
+        if not user.is_superuser:
+            return Response(status=401)
+        
+        try:
+            
+            jobs = Job.objects.filter(published=True)
+            
+            jobs = [
+                {
+                    "id": job.getJobId,
+                    "job_link": job.job_link,
+                    "job_title": job.job_title,
+                    "company": job.company.company,
+                    "country": job.country.split(","),
+                    "city": job.city.split(","),
+                    "county": job.county.split(","),
+                    "remote": job.remote.split(","),
+                }
+                for job in jobs
+            ]
+
+            self.solr.delete(q="*:*")
+            self.solr.commit(expungeDeletes=True)
+
+            if jobs:
+                self.solr.add(jobs)
+                self.solr.commit(expungeDeletes=True)
+
+            return Response(200)
+        except Exception as e:
+            return Response(status=400)
+

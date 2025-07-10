@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from requests.auth import HTTPBasicAuth
 import pysolr
 from users.models import CustomUser
 from .models import Company, DataSet
@@ -14,12 +15,17 @@ class CompanySerializer(serializers.ModelSerializer):
     have_access = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
 
+    source_name = serializers.SerializerMethodField()
+    source_logo = serializers.SerializerMethodField()
+
+
     class Meta:
         model = Company
         fields = ['company', 'scname', 'website',
-                  'description', 'logo', 'jobsCount', 'published_jobs', 'have_access']
+                  'description', 'logo', 'source','jobsCount', 'published_jobs', 'have_access', 'source_name', 'source_logo']
 
     def create(self, validated_data):
+        print(validated_data)
         instance, create = Company.objects.get_or_create(**validated_data)
 
         if create:
@@ -42,14 +48,27 @@ class CompanySerializer(serializers.ModelSerializer):
         published_jobs = Job.objects.filter(company=obj.id, published=True).count()
         return published_jobs
     
+    def get_source_name(self, obj):
+        try:
+            return obj.source.sursa
+        except Exception:
+            return None
+    def get_source_logo(self, obj):
+        try:
+            return obj.source.image.url
+        except Exception:
+            return None
+
     
 
     def get_logo(self, obj):
         
         url = os.getenv("DATABASE_SOLR") + '/solr/auth'
+        username = os.getenv("DATABASE_SOLR_USERNAME")
+        password = os.getenv("DATABASE_SOLR_PASSWORD")
 
         try:
-            solr = pysolr.Solr(url)
+            solr = pysolr.Solr(url, auth=HTTPBasicAuth(username, password), timeout=5)
             company = obj.company
             
             query = f'id:{company} OR id:{company.lower()} OR id:{company.upper()} OR id:{company.capitalize()}'

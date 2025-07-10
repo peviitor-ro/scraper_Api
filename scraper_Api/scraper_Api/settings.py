@@ -42,6 +42,7 @@ ALLOWED_HOSTS = [
     'dev.laurentiumarian.ro',
     'api.laurentiumarian.ro',
     '192.168.0.156',
+    '81.180.202.206',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -192,9 +193,14 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT'),
+        'CONN_MAX_AGE': 600,
+        'CONN_HEALTH_CHECKS': True,
         'OPTIONS': {
+            'init_command': "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
             'charset': 'utf8mb4',
+            'use_unicode': True,
         },
+        'ATOMIC_REQUESTS': True,
     }
 }
 
@@ -274,4 +280,23 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',  # Asigură-te că nivelul este setat corect
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Poți seta INFO, WARNING, ERROR etc.
+            'propagate': True,
+        },
+    },
+}

@@ -1,15 +1,13 @@
 import logging
 import atexit
-import os
 import time
 from datetime import datetime
 
-from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 from django_apscheduler.models import DjangoJob
-from pymysql.err import OperationalError
-import pymysql
+from .models import Company
+
 
 from .models import Company, DataSet
 from jobs.models import Job
@@ -17,47 +15,9 @@ from jobs.models import Job
 # Configurare logging
 logging.basicConfig(level=logging.INFO)
 
-# Încarcă variabilele de mediu
-load_dotenv()
-
 # Global: scheduler-ul
 scheduler = BackgroundScheduler()
 scheduler.add_jobstore(DjangoJobStore(), "default")
-
-
-def get_connection():
-    """Return a MySQL connection."""
-    return pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-        port=int(os.getenv("DB_PORT")),
-        charset='utf8mb4',
-        cursorclass=pymysql.cursors.DictCursor,
-        autocommit=True,
-    )
-
-
-def get_all_companies(retries=3, delay=2):
-    """Return all companies, cu retry logic pentru conexiuni pierdute."""
-    for i in range(retries):
-        try:
-            connection = get_connection()
-            connection.ping(reconnect=True)
-
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM company_company")
-                results = cursor.fetchall()
-                connection.close()
-                return results
-
-        except OperationalError as e:
-            logging.warning(f"[Retry {i + 1}] Conexiune pierdută: {e}")
-            time.sleep(delay)
-
-    raise OperationalError(
-        "Eroare: Nu s-a putut executa query-ul după retry-uri.")
 
 
 def unpublish_jobs(company):
@@ -73,7 +33,7 @@ def clean():
     logging.info("Jobul clean() a început!")
     today = datetime.now().date()
 
-    companies = get_all_companies()
+    companies = Company.objects.values('company', 'source').distinct()
 
     for company_data in companies:
         company = Company.objects.filter(
@@ -105,7 +65,7 @@ def start():
         scheduler.add_job(
             clean,
             trigger="interval",
-            days=1,  # Sau 'minutes=1' pentru test
+            minutes=1,  # Sau 'minutes=1' pentru test
             id="clean_job",
             jobstore="default",
             replace_existing=True,
@@ -140,5 +100,11 @@ atexit.register(stop_scheduler)
 
 # Dacă rulezi direct fișierul pentru test:
 if __name__ == "__main__":
-    companies = get_all_companies()
-    print(f"{len(companies)} companii extrase.")
+    logging.info("Pornim schedulerul...")
+    start()
+    try:
+        while True:
+            time.sleep(1)  # Menține scriptul activ
+    except (KeyboardInterrupt, SystemExit):
+        logging.info("Oprire manuală detectată, închidem schedulerul...")
+        stop_scheduler()

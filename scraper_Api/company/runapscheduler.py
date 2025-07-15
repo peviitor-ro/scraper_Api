@@ -65,7 +65,7 @@ def start():
         scheduler.add_job(
             clean,
             trigger="interval",
-            minutes=1,  # Sau 'minutes=1' pentru test
+            days=1,  # Sau 'minutes=1' pentru test
             id="clean_job",
             jobstore="default",
             replace_existing=True,

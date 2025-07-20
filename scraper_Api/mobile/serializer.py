@@ -22,7 +22,7 @@ class JobSerializer(serializers.ModelSerializer):
         password = os.getenv("DATABASE_SOLR_PASSWORD")
 
         try:
-            solr = pysolr.Solr(url, auth=HTTPBasicAuth(username, password), timeout=5)
+            solr = pysolr.Solr(url, auth=HTTPBasicAuth(username, password), timeout=60)
             company = str(obj.company)
 
             query = f'id:{company} OR id:{company.lower()} OR id:{company.upper()} OR id:{company.capitalize()}'

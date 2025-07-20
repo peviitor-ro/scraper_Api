@@ -153,7 +153,7 @@ class ClearCompany(APIView):
         username = os.getenv("DATABASE_SOLR_USERNAME")
         password = os.getenv("DATABASE_SOLR_PASSWORD")
 
-        solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
+        solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=60)
         solr.delete(q=f"company:{company.company}")
         solr.commit(expungeDeletes=True)
 

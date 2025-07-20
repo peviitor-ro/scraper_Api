@@ -15,7 +15,7 @@ username = os.getenv("DATABASE_SOLR_USERNAME")
 password = os.getenv("DATABASE_SOLR_PASSWORD")
 url = DATABASE_SOLR + "/solr/jobs"
 
-solr = pysolr.Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5, always_commit=True)
+solr = pysolr.Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=60, always_commit=True)
 
 class Job(models.Model):
     company = models.ForeignKey(

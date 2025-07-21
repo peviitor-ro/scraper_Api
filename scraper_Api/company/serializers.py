@@ -25,9 +25,7 @@ class CompanySerializer(serializers.ModelSerializer):
                   'description', 'logo', 'source','jobsCount', 'published_jobs', 'have_access', 'source_name', 'source_logo']
 
     def create(self, validated_data):
-        print(validated_data)
         instance, create = Company.objects.get_or_create(**validated_data)
-
         if create:
             superusers = CustomUser.objects.filter(is_superuser=True)
             for user in superusers:

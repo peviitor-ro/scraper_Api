@@ -25,3 +25,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
     
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.is_superuser:
+            self.company.set(Company.objects.values_list('id', flat=True))
+            self.scraper.set(Scraper.objects.values_list('id', flat=True))
+    

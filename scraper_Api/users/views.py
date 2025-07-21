@@ -169,28 +169,32 @@ class UsersCompany(APIView):
 
     def get(self, request):
         user = request.user
-        user_get = request.GET.get('user')
+        user_get_email = request.GET.get('user')
 
-        companies = list(user.company.all().order_by(
-            'company').values('company'))
-        scrapers = list(user.scraper.all().order_by(
-            'name').values('name'))
+        companies = list(
+            user.company.values('id', 'company').order_by('company')
+        )
+        scrapers = list(
+            user.scraper.values('id', 'name')
+        )
 
-        if user_get:
-            user_get = User.objects.get(email=user_get)
-            user_get_companise = user_get.company.all().values()
-            user_get_scrapers = user_get.scraper.all().values()
+        if user_get_email:
+            user_get = User.objects.get(email=user_get_email)
+
+            user_company_ids = set(
+                user_get.company.values_list('id', flat=True))
+            user_scraper_names = set(
+                user_get.scraper.values_list('name', flat=True))
 
             for company in companies:
-                company['selected'] = user_get_companise.filter(
-                    company=company['company']).exists()
-                
-            for scraper in scrapers:
-                scraper['selected'] = user_get_scrapers.filter(
-                    name=scraper['name']).exists()
+                company['selected'] = company['id'] in user_company_ids
 
-        users = User.objects.all().filter(is_superuser=False).order_by('email').values(
-            'email', 'is_staff', 'is_superuser').exclude(email=user.email)
+            for scraper in scrapers:
+                scraper['selected'] = scraper['name'] in user_scraper_names
+
+        users = User.objects.filter(is_superuser=False).exclude(email=user.email) \
+            .order_by('email') \
+            .values('email', 'is_staff', 'is_superuser')
 
         response = {
             "is_superuser": user.is_superuser,

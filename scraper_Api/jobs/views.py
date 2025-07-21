@@ -278,7 +278,7 @@ class SyncronizeJobs(APIView):
         if not company:
             return Response(status=400)
 
-        solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
+        solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=60)
         solr.delete(q=f"company:{company}")
         solr.commit(expungeDeletes=True)
 

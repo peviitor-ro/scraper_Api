@@ -127,7 +127,7 @@ class AddScraperJobs(APIView, JobView):
 
             current_date = datetime.now()
 
-            company_instance = Company.objects.get(company=company)
+            company_instance = Company.objects.filter(company=company).first()
             jobs = Job.objects.filter(company=company_instance).count()
 
             DataSet.objects.update_or_create(

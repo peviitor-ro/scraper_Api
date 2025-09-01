@@ -164,15 +164,15 @@ class GetJobData(APIView):
     pagination_class = CustomPagination
 
     def get(self, request):
-        company = request.GET.get("company",)
+        company_id = request.GET.get("id",)
         search = request.GET.get("search") or ""
         order_query = request.GET.get("order") or "all"
         order_by = JOB_SORT_OPTIONS.get(order_query)
         user = request.user
         user_companies = user.company.all()
 
-        if user_companies.filter(company=company.title()).exists():
-            company = get_object_or_404(Company, company=company.title())
+        if user_companies.filter(id=company_id).exists():
+            company = get_object_or_404(Company, id=company_id)
             queryset = Job.objects.filter(
                 company=company.id, job_title__icontains=search
             ).order_by(order_by)

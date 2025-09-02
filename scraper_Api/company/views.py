@@ -129,6 +129,7 @@ class DeleteCompany(APIView):
 
 
 class ClearCompany(APIView):
+
     def post(self, request):
         company = request.data.get("company")
         user = request.user
@@ -159,7 +160,8 @@ class ClearCompany(APIView):
 
 
 class DataSetView(APIView):
-    def get(self, request, company):
+    def get(self, request, id):
+        company = Company.objects.filter(id=id).first()
         company = request.user.company.filter(company=company).first()
 
         if not company:
@@ -173,3 +175,5 @@ class DataSetView(APIView):
 
         serializer = DataSetSerializer(data, many=True)
         return Response(serializer.data)
+
+

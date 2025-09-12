@@ -56,7 +56,7 @@ class GetJobSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Job
-        fields = ['job_link', 'job_title', 'company', 'country', 'city',
+        fields = ['id','job_link', 'job_title', 'company', 'country', 'city',
                   'county', 'remote', 'edited', 'published', 'posted', 'company_name']
 
     def get_company_name(self, obj):

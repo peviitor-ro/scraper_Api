@@ -52,6 +52,7 @@ class JobView(object):
             for job in jobs:
                 source = job.get("source")
                 job_obj = {
+                    "id": job.get("id"),
                     "job_link": self.transform_data(job.get("job_link")),
                     "job_title": self.transform_data(job.get("job_title")),
                     "country": self.transform_data(job.get("country")),
@@ -59,6 +60,7 @@ class JobView(object):
                     "county": self.transform_data(job.get("county")),
                     "remote": self.transform_data(job.get("remote")),
                     "company": self.transform_data(job.get("company")).title(),
+                    "companyId": job.get("companyId"),
                 }
 
                 if source:
@@ -227,7 +229,7 @@ class EditJob(APIView, JobView):
         for job in jobs:
             try:
                 company = request.user.company.get(
-                    company=self.transform_data(job.get("company")).title())
+                    id=self.transform_data(job.get("companyId")).title())
                 job["company"] = company.id
 
                 serializer = JobAEditSerializer(
@@ -244,6 +246,7 @@ class EditJob(APIView, JobView):
 class DeleteJob(APIView, JobView):
     def post(self, request):
         jobs = self.transformed_jobs(request.data)
+        print(jobs)
 
         if not jobs:
             return Response(status=400)
@@ -251,9 +254,9 @@ class DeleteJob(APIView, JobView):
         for job in jobs:
             try:
                 company = request.user.company.get(
-                    company=self.transform_data(job.get("company")).title())
+                    id=self.transform_data(job.get("companyId")).title())
                 job_link = self.transform_data(job.get("job_link"))
-                job_obj = Job.objects.get(job_link=job_link, company=company)
+                job_obj = Job.objects.get(job_link=job_link, company=company.id)
 
                 if not job_obj:
                     return Response(JOB_NOT_FOUND)
@@ -274,6 +277,7 @@ class PublishJob(APIView, JobView):
 class SyncronizeJobs(APIView):
     def post(self, request):
         company = request.data.get("company")
+        print(company)
 
         if not company:
             return Response(status=400)
@@ -282,7 +286,7 @@ class SyncronizeJobs(APIView):
         solr.delete(q=f"company:{company}")
         solr.commit(expungeDeletes=True)
 
-        company_instance = get_object_or_404(Company, company=company)
+        company_instance = get_object_or_404(Company, id=company)
         jobs = Job.objects.filter(company=company_instance, published=True)
 
         for job in jobs:

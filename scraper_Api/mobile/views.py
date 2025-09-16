@@ -5,6 +5,7 @@ from utils.pagination import CustomPagination
 from .serializer import JobSerializer, CompanySerializer
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
+from rest_framework import status
 
 from jobs.models import Job
 from company.models import Company
@@ -83,3 +84,17 @@ class GetTotalJobs(APIView):
     def get(self, _):
         total_jobs = Job.objects.filter(published=True).count()
         return Response({"total": total_jobs})
+    
+
+@permission_classes([AllowAny])
+class CheckSavedJobsView(APIView):
+    def post(self, request):
+        job_ids = request.data.get("ids", [])
+        
+        if not isinstance(job_ids, list):
+            return Response({"error": "job_ids must be a list."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        existing_jobs = Job.objects.filter(id__in=job_ids, published=True).values_list('id', flat=True)
+        existing_job_ids = list(existing_jobs)
+
+        return Response({"existing_job_ids": existing_job_ids}, status=status.HTTP_200_OK)

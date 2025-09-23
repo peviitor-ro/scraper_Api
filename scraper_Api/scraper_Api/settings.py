@@ -64,6 +64,7 @@ CORS_ALLOWED_ORIGINS = (
     'https://scrapers.peviitor.ro',
     'https://api.laurentiumarian.ro',
     'http://localhost:3000',
+    "https://admin.zira.ro",
 )
 CORS_ALLOW_HEADERS = ('*')
 CORS_ALLOW_METHODS = ['GET', 'POST']

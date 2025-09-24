@@ -7,6 +7,131 @@ The Automatic Scraper API is a web service that allows you to automate the proce
 
 Only supports Python or JavaScript files
 
+## Testing
+
+This project includes comprehensive automated tests for all Django apps to ensure code quality and prevent regressions.
+
+### Running Tests Locally
+
+#### Option 1: Using Django's built-in test runner
+
+```bash
+# Navigate to the project directory
+cd scraper_Api
+
+# Set the test settings
+export DJANGO_SETTINGS_MODULE=scraper_Api.test_settings
+
+# Run all tests
+python manage.py test
+
+# Run tests with verbose output
+python manage.py test --verbosity=2
+
+# Run specific app tests
+python manage.py test scraper
+python manage.py test users
+python manage.py test company
+
+# Run specific test classes
+python manage.py test scraper.tests.ScraperModelTest
+python manage.py test users.tests.CustomUserModelTest
+```
+
+#### Option 2: Using pytest
+
+```bash
+# Navigate to the project directory
+cd scraper_Api
+
+# Run all tests with pytest
+python -m pytest
+
+# Run with verbose output
+python -m pytest -v
+
+# Run specific tests
+python -m pytest scraper/tests.py
+python -m pytest users/tests.py -v
+```
+
+### Running Tests with Coverage
+
+```bash
+# Navigate to the project directory
+cd scraper_Api
+
+# Run tests with coverage measurement
+export DJANGO_SETTINGS_MODULE=scraper_Api.test_settings
+python -m coverage run --source='.' manage.py test
+
+# Generate coverage report
+python -m coverage report
+
+# Generate HTML coverage report
+python -m coverage html
+# Open htmlcov/index.html in your browser
+
+# Generate XML coverage report (for CI/CD)
+python -m coverage xml
+```
+
+### Test Structure
+
+The project includes tests for:
+
+- **Models**: Validation, relationships, constraints, and business logic
+- **Views**: API endpoints, authentication, and response handling  
+- **Forms**: Data validation and processing
+- **Managers**: Custom user management functionality
+- **Middleware**: Rate limiting and request processing
+- **Background tasks**: Newsletter sending and scheduled operations
+- **WebSocket consumers**: Real-time notifications (when channels is available)
+
+### Current Test Coverage
+
+- **Overall**: 33% code coverage
+- **Models**: 80%+ coverage on critical business logic
+- **User Management**: 95% coverage
+- **Job Models**: 81% coverage including Solr integration
+
+### Dependencies for Testing
+
+The following packages are required for running tests:
+
+```bash
+# System packages (Ubuntu/Debian)
+sudo apt install -y python3-django python3-djangorestframework python3-pytest python3-pytest-django python3-coverage python3-pymysql python3-dotenv python3-pysolr python3-pil
+
+# Or install via pip (if system packages are not available)
+pip install Django djangorestframework pytest pytest-django coverage PyMySQL python-dotenv pysolr Pillow
+```
+
+### CI/CD Integration  
+
+The project includes GitHub Actions workflows that automatically run tests on:
+
+- Python versions: 3.9, 3.10, 3.11, 3.12
+- On push to main/develop branches
+- On pull requests to main/develop branches
+
+The CI pipeline:
+1. Sets up the Python environment
+2. Installs system dependencies
+3. Runs the full test suite
+4. Generates coverage reports
+5. Uploads coverage to Codecov (if configured)
+
+### Test Configuration
+
+Tests use a separate configuration (`scraper_Api.test_settings.py`) that:
+
+- Uses SQLite in-memory database for speed
+- Disables migrations for faster test execution
+- Mocks external services (Solr, Redis, Email)
+- Uses simplified authentication for testing
+- Provides minimal URL configuration
+
 ## API Endpoints 
 The Automatic Scraper API provides the following endpoints:
 

@@ -157,7 +157,7 @@ class NewsletterViewsTest(APITestCase):
         # This would test the actual unsubscribe endpoint
         # Implementation depends on the actual view structure
     
-    @patch('newsletter.task.send_newsletter_email')
+    @patch('newsletter.task.send_newsletter_mail')
     def test_newsletter_send_task(self, mock_send_email):
         """Test newsletter sending task"""
         mock_send_email.return_value = True

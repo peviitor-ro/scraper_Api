@@ -85,6 +85,13 @@ REST_FRAMEWORK = {
     ),
 }
 
+# Channels configuration for testing
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
 # Disable migrations for faster tests
 class DisableMigrations:
     def __contains__(self, item):

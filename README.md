@@ -1,13 +1,467 @@
-# Automatic Scraper API
+# Pe Viitor - Job Scraping API
 ![Pe Viitor logo](https://peviitor.ro/static/media/peviitor_logo.df4cd2d4b04f25a93757bb59b397e656.svg)
 
-This API will take care of scrapers in case any of them fail.
+**A comprehensive Django REST API for managing job scrapers, companies, and job listings with real-time search capabilities.**
 
-The Automatic Scraper API is a web service that allows you to automate the process of web scraping and file updating. With this API, you can run scrapers that collect data from various websites, and have those scrapers automatically update your files when changes are detected.
+Pe Viitor is a robust web service designed to automate job data collection from various websites and provide powerful search and filtering capabilities. The platform allows you to manage job scrapers, track companies, and serve job data through a modern REST API with real-time search powered by Apache Solr.
 
-Only supports Python or JavaScript files
+## ✨ Features
 
-## Testing
+### 🏢 Company Management
+- Create, update, and delete company profiles
+- Track company job statistics and historical data
+- Link companies to their data sources and scrapers
+- Company-specific job clearing and synchronization
+
+### 💼 Job Management
+- Add jobs programmatically via scrapers or manual input
+- Edit job details including location, remote options, and publication status
+- Publish/unpublish jobs with automatic Solr search index updates
+- Filter jobs by company, location, remote work options, and publication status
+- Advanced job search with infinite scroll pagination
+
+### 🤖 Scraper Management
+- Support for Python and JavaScript scrapers
+- Automated dependency installation (requirements.txt, package.json)
+- Git repository integration for scraper code management
+- Containerized scraper execution with Docker
+- Scraper testing and validation framework
+- Automatic updates from Git repositories
+
+### 🔍 Real-time Search
+- Apache Solr-powered job search engine
+- Fast, full-text search across job titles, companies, and locations
+- Advanced filtering by multiple criteria
+- Optimized for high-performance queries
+
+### 👥 User Management
+- Custom user authentication with email-based login
+- JWT token authentication for API access
+- Role-based permissions (superuser, company-specific access)
+- User-company and user-scraper associations
+
+### 📱 Additional Features
+- Real-time notifications via WebSockets (Django Channels)
+- Newsletter subscription management
+- Mobile API endpoints
+- City/location management (orase module)
+- Background task scheduling with APScheduler
+
+## 🛠️ Tech Stack
+
+- **Backend**: Django 4.2, Django REST Framework
+- **Database**: MySQL/PostgreSQL with PyMySQL connector
+- **Search Engine**: Apache Solr for real-time job search
+- **Cache/Message Broker**: Redis for caching and WebSocket support
+- **Real-time Features**: Django Channels with WebSocket support
+- **Authentication**: JWT tokens with Django REST Framework SimpleJWT
+- **Task Scheduling**: APScheduler for background jobs
+- **Containerization**: Docker for scraper execution
+- **Image Processing**: Pillow for company logos and images
+
+## 🚀 Quick Setup
+
+### Prerequisites
+
+- Python 3.9+ 
+- MySQL or PostgreSQL database
+- Apache Solr instance
+- Redis server (for real-time features)
+- Git
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/peviitor-ro/scraper_Api.git
+cd scraper_Api/scraper_Api
+```
+
+### 2. Install Dependencies
+
+#### Option A: Using System Packages (Ubuntu/Debian)
+```bash
+sudo apt update
+sudo apt install -y python3-django python3-djangorestframework python3-pymysql \
+                    python3-dotenv python3-requests python3-pil python3-redis \
+                    python3-channels python3-channels-redis
+```
+
+#### Option B: Using pip
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+# Database Configuration
+DEBUG=True
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_HOST=localhost
+DB_PORT=3306
+
+# Solr Configuration
+DATABASE_SOLR=http://localhost:8983
+DATABASE_SOLR_USERNAME=your_solr_username
+DATABASE_SOLR_PASSWORD=your_solr_password
+
+# Email Configuration (for notifications)
+EMAIL_HOST_USER=your_email@domain.com
+EMAIL_HOST_PASSWORD=your_email_password
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:3000
+```
+
+### 4. Database Setup
+
+```bash
+# Run migrations
+python manage.py migrate
+
+# Create a superuser account
+python manage.py createsuperuser
+```
+
+### 5. Start the Development Server
+
+```bash
+# Start the Django development server
+python manage.py runserver
+
+# The API will be available at http://localhost:8000
+```
+
+## 📖 API Documentation
+
+### Authentication
+
+The API uses JWT token authentication. First, obtain a token:
+
+```bash
+curl -X POST http://localhost:8000/get_token \
+  -H "Content-Type: application/json" \
+  -d '{"email": "your_email@domain.com", "password": "your_password"}'
+```
+
+Use the token in subsequent requests:
+```bash
+curl -H "Authorization: Bearer your_jwt_token" http://localhost:8000/endpoint
+```
+
+### 🏢 Company Endpoints
+
+#### List Companies
+```bash
+curl -H "Authorization: Bearer your_jwt_token" \
+  "http://localhost:8000/companies/"
+```
+
+#### Add a New Company
+```bash
+curl -X POST http://localhost:8000/companies/add/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company": "Tech Corp",
+    "scname": "TechCorp",
+    "website": "https://techcorp.com",
+    "description": "Leading technology company"
+  }'
+```
+
+#### Update Company
+```bash
+curl -X PUT http://localhost:8000/companies/update/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 1,
+    "company": "Updated Tech Corp",
+    "website": "https://newtechcorp.com"
+  }'
+```
+
+### 💼 Job Endpoints
+
+#### Get Jobs with Filters
+```bash
+# Get all published jobs
+curl -H "Authorization: Bearer your_jwt_token" \
+  "http://localhost:8000/jobs/get/"
+
+# Filter jobs by company
+curl -H "Authorization: Bearer your_jwt_token" \
+  "http://localhost:8000/jobs/get/?company=1"
+
+# Filter jobs by city and remote options
+curl -H "Authorization: Bearer your_jwt_token" \
+  "http://localhost:8000/jobs/get/?city=Bucharest&remote=true"
+
+# Pagination and sorting
+curl -H "Authorization: Bearer your_jwt_token" \
+  "http://localhost:8000/jobs/get/?page=1&limit=20&sort=created_date"
+```
+
+#### Add a Job
+```bash
+curl -X POST http://localhost:8000/jobs/add/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company": 1,
+    "job_title": "Python Developer",
+    "job_link": "https://company.com/jobs/python-dev",
+    "country": "Romania",
+    "city": "Bucharest, Cluj-Napoca",
+    "county": "Bucharest, Cluj",
+    "remote": "hybrid, full-remote"
+  }'
+```
+
+#### Publish/Unpublish Job
+```bash
+# Publish job (makes it searchable)
+curl -X POST http://localhost:8000/jobs/publish/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{"job_id": 123}'
+```
+
+#### Synchronize Company Jobs
+```bash
+# Sync all jobs for a company with Solr search index
+curl -X POST http://localhost:8000/jobs/sync/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{"company": 1}'
+```
+
+### 🤖 Scraper Endpoints
+
+#### Add a Scraper Repository
+```bash
+curl -X POST http://localhost:8000/scraper/add/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://github.com/username/job-scraper.git"}'
+```
+
+#### List Scraper Files
+```bash
+# List files in a scraper repository
+curl -H "Authorization: Bearer your_jwt_token" \
+  "http://localhost:8000/scraper/your-repo-name/"
+```
+
+#### Run a Scraper
+```bash
+# Run a specific scraper file
+curl -X POST http://localhost:8000/scraper/your-repo-name/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{"file": "scraper.py"}'
+
+# Force run a scraper (ignore recent runs)
+curl -X POST http://localhost:8000/scraper/your-repo-name/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{"file": "scraper.py", "force": "true"}'
+```
+
+#### Update Scraper Repository
+```bash
+# Pull latest changes from Git
+curl -X POST http://localhost:8000/scraper/your-repo-name/ \
+  -H "Authorization: Bearer your_jwt_token" \
+  -H "Content-Type: application/json" \
+  -d '{"update": "true"}'
+```
+
+### Python API Examples
+
+```python
+import requests
+
+# Configuration
+API_BASE = "http://localhost:8000"
+TOKEN = "your_jwt_token"
+HEADERS = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Content-Type": "application/json"
+}
+
+# Get companies
+response = requests.get(f"{API_BASE}/companies/", headers=HEADERS)
+companies = response.json()
+
+# Add a new job
+job_data = {
+    "company": 1,
+    "job_title": "Senior Django Developer",
+    "job_link": "https://example.com/job/123",
+    "country": "Romania",
+    "city": "Bucharest",
+    "county": "Bucharest",
+    "remote": "hybrid"
+}
+response = requests.post(f"{API_BASE}/jobs/add/", json=job_data, headers=HEADERS)
+
+# Search jobs with filters
+params = {
+    "city": "Bucharest",
+    "remote": "true",
+    "company": 1,
+    "page": 1,
+    "limit": 20
+}
+response = requests.get(f"{API_BASE}/jobs/get/", params=params, headers=HEADERS)
+jobs = response.json()
+
+# Run a scraper
+scraper_data = {"file": "companies/example_scraper.py"}
+response = requests.post(
+    f"{API_BASE}/scraper/example-repo/",
+    json=scraper_data,
+    headers=HEADERS
+)
+```
+
+## 📁 Project Structure
+
+```
+scraper_Api/
+├── scraper_Api/                 # Main Django project
+│   ├── scraper_Api/            # Project settings and configuration
+│   │   ├── settings.py         # Main settings
+│   │   ├── test_settings.py    # Test-specific settings
+│   │   ├── urls.py             # URL routing
+│   │   └── wsgi.py/asgi.py     # WSGI/ASGI configuration
+│   │
+│   ├── company/                # Company management app
+│   │   ├── models.py           # Company, Source, DataSet models
+│   │   ├── views.py            # Company CRUD operations
+│   │   ├── serializers.py      # API serializers
+│   │   └── urls.py             # Company endpoints
+│   │
+│   ├── jobs/                   # Job management app
+│   │   ├── models.py           # Job model with Solr integration
+│   │   ├── views.py            # Job CRUD, search, publish operations
+│   │   ├── serializer.py       # Job serializers
+│   │   └── urls.py             # Job endpoints
+│   │
+│   ├── scraper/                # Scraper management app
+│   │   ├── models.py           # Scraper model
+│   │   ├── views.py            # Scraper execution and management
+│   │   ├── utils/              # Scraper utilities
+│   │   │   └── scraper.py      # Core scraper logic
+│   │   └── urls.py             # Scraper endpoints
+│   │
+│   ├── users/                  # User management app
+│   │   ├── models.py           # CustomUser model
+│   │   ├── managers.py         # Custom user manager
+│   │   ├── views.py            # Authentication endpoints
+│   │   ├── middleware.py       # Rate limiting middleware
+│   │   └── urls.py             # User/auth endpoints
+│   │
+│   ├── newsletter/             # Newsletter management
+│   ├── mobile/                 # Mobile-specific endpoints
+│   ├── notifications/          # Real-time notifications
+│   ├── orase/                  # City/location management
+│   ├── utils/                  # Shared utilities
+│   │   └── pagination.py       # Custom pagination
+│   │
+│   ├── static/                 # Static files
+│   ├── templates/              # Django templates
+│   └── manage.py               # Django management script
+│
+├── requirements.txt            # Python dependencies
+├── LICENSE                     # MIT License
+└── README.md                   # This file
+```
+
+### Key Models
+
+#### Company Model (`company/models.py`)
+- **Company**: Main company entity with name, website, description
+- **Source**: Data source tracking for companies
+- **DataSet**: Historical job count data for companies
+
+#### Job Model (`jobs/models.py`)
+- **Job**: Core job entity with title, link, location, company relationship
+- Integrates with Solr search engine for real-time search
+- Supports publish/unpublish workflow
+- Automatic ID generation using MD5 hash of job link
+
+#### User Model (`users/models.py`)
+- **CustomUser**: Extends Django's AbstractBaseUser
+- Email-based authentication
+- Many-to-many relationships with companies and scrapers
+- Automatic superuser permissions for all companies/scrapers
+
+#### Scraper Model (`scraper/models.py`)
+- **Scraper**: Tracks scraper repositories and metadata
+- Supports Python, JavaScript, and JMeter scripts
+- Linked to users for access control
+
+## 🔧 Development & Deployment
+
+### Local Development
+
+```bash
+# Install development dependencies
+pip install -r requirements.txt
+
+# Set up pre-commit hooks (optional)
+pre-commit install
+
+# Run with debug mode
+export DEBUG=True
+python manage.py runserver
+
+# Access Django admin
+http://localhost:8000/admin/
+```
+
+### Running with Docker (if available)
+
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Run scrapers in containers
+docker run -it your-scraper-image python scraper.py
+```
+
+### Environment Configuration
+
+#### Development (.env)
+```env
+DEBUG=True
+DB_NAME=scraper_dev
+DB_USER=dev_user
+DB_PASSWORD=dev_password
+DB_HOST=localhost
+DATABASE_SOLR=http://localhost:8983
+```
+
+#### Production (.env)
+```env
+DEBUG=False
+DB_NAME=scraper_prod
+DB_USER=prod_user
+DB_PASSWORD=secure_password
+DB_HOST=your-db-host
+DATABASE_SOLR=https://your-solr-host
+EMAIL_HOST_USER=noreply@yourdomain.com
+EMAIL_HOST_PASSWORD=secure_email_password
+```
+
+## 🧪 Testing
 
 This project includes comprehensive automated tests for all Django apps to ensure code quality and prevent regressions.
 
@@ -95,33 +549,6 @@ The project includes tests for:
 - **User Management**: 95% coverage
 - **Job Models**: 81% coverage including Solr integration
 
-### Dependencies for Testing
-
-The following packages are required for running tests:
-
-```bash
-# System packages (Ubuntu/Debian)
-sudo apt install -y python3-django python3-djangorestframework python3-pytest python3-pytest-django python3-coverage python3-pymysql python3-dotenv python3-pysolr python3-pil
-
-# Or install via pip (if system packages are not available)
-pip install Django djangorestframework pytest pytest-django coverage PyMySQL python-dotenv pysolr Pillow
-```
-
-### CI/CD Integration  
-
-The project includes GitHub Actions workflows that automatically run tests on:
-
-- Python versions: 3.9, 3.10, 3.11, 3.12
-- On push to main/develop branches
-- On pull requests to main/develop branches
-
-The CI pipeline:
-1. Sets up the Python environment
-2. Installs system dependencies
-3. Runs the full test suite
-4. Generates coverage reports
-5. Uploads coverage to Codecov (if configured)
-
 ### Test Configuration
 
 Tests use a separate configuration (`scraper_Api.test_settings.py`) that:
@@ -132,112 +559,215 @@ Tests use a separate configuration (`scraper_Api.test_settings.py`) that:
 - Uses simplified authentication for testing
 - Provides minimal URL configuration
 
-## API Endpoints 
-The Automatic Scraper API provides the following endpoints:
+## 🤝 Contributing
 
-### Add Scraper [`POST scraper/add/`](https://dev.laurentiumarian.ro/scraper/add/ "`POST scraper/add/`")
+We welcome contributions from the community! Here's how you can help improve Pe Viitor:
 
-on Site
+### Getting Started
 
-<img width="auto" alt="Screenshot 2023-05-07 at 12 28 47" src="https://user-images.githubusercontent.com/67306273/236669416-291958be-2c23-4940-aba0-9808a8405bbd.png">
+1. **Fork the repository** on GitHub
+2. **Clone your fork** locally:
+   ```bash
+   git clone https://github.com/your-username/scraper_Api.git
+   cd scraper_Api
+   ```
+3. **Create a virtual environment** and install dependencies
+4. **Create a new branch** for your feature:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
 
-or Bash script
+### Development Guidelines
 
-```bash
-curl -X POST -d '{"url":"https://github.com/your_repository.git"}' https://dev.laurentiumarian.ro/scraper/add/
+#### Code Style
 
-```
-Clone a GitHub repository
+- Follow **PEP 8** for Python code style
+- Use **meaningful variable and function names**
+- Add **docstrings** to all functions and classes
+- Keep functions small and focused on a single responsibility
+- Use **type hints** where appropriate
 
-To ensure that the files can be read, you need to create a folder within the repository called "sites" and ensure that all files are stored in this folder. Also for dependencies you need the file "requirements.txt" for python or "packange.json" for Javascript in the root folder of the project
-
-### Running a scraper `GET/POST scraper/your_github_repository/`
-
-on Site
-
-<img width="auto" alt="Screenshot 2023-05-07 at 13 01 29" src="https://user-images.githubusercontent.com/67306273/236670911-9ede6d3d-74a5-4512-823b-96a41c6a1a3b.png">
-
-or Bash script
-
-#### GET All files
-
-```bash
-curl -X GET https://dev.laurentiumarian.ro/scraper/your_repository_root_folder/
-```
-
-#### Run Scraper
+#### Code Quality
 
 ```bash
-curl -X POST -d '{"file":"your_file.extension"}' https://dev.laurentiumarian.ro/scraper/your_repository_root_folder/
+# Run code formatting (if available)
+black .
+isort .
 
-```
+# Run linting
+flake8 .
+pylint your_app/
 
-#### Run Forced Scraper
-
-```bash
-curl -X POST -d '{"file":"your_file.extension","force":"true"}' https://dev.laurentiumarian.ro/scraper/your_repository_root_folder/
-
-``` 
-
-#### Running Tests
-
-Each scraper includes a dedicated section for logging activities
-
-[comment]: <> (image here)
-
-This section allows you to review the results of the scraper's automated test. The test is separate from the scraper itself and can be implemented in any programming language.
-
-##### Test endpoint
-
-### Test Pass or Fail
-
-```bash
-curl -X POST -d '{"is_succes":"Fail or Pass", "logs":"your message"}' https://dev.laurentiumarian.ro/scraper/your_repository_root_folder/scraper.extension
+# Check for security issues
+bandit -r .
 ```
 
-This endpoint serves the purpose of sending test results to the scraper. A request is sent to the endpoint with two parameters: "is_success" and "logs." The "is_success" parameter is used to indicate the success or failure of the test. The "logs" parameter allows sending a custom message to the scraper. The scraper will display this message in the "Logs" section, providing visibility into the test execution process.
+#### Testing
 
-You can enhance the functionality by including a manual test feature with an "Add Test" button. When a test is added, the scraper's behavior can be controlled based on the test status. If the status is set to "Pass," the scraper will run automatically. On the other hand, if the status is marked as "Fail," the scraper will not run and will be deactivated.
-
-[comment]: <> (image here)
-
-Running a Scraper from the "sites" folder
-
-### Update Files`POST scraper/your_github_repository/`
-
-The function called "update" verifies whether there are any modifications in the primary branch and updates them if any changes are found.
-
-on Site 
-
-<img width="auto" alt="Screenshot 2023-05-07 at 13 14 38" src="https://user-images.githubusercontent.com/67306273/236671691-45dab3d1-9f6e-4ae3-927c-247adbf5e021.png">
-
-or Bash script 
+- **Write tests** for all new features and bug fixes
+- Ensure **test coverage** doesn't decrease
+- All tests must pass before submitting a PR
 
 ```bash
-curl -X POST -d '{"update":"true"}' https://dev.laurentiumarian.ro/scraper/your_repository_root_folder/
+# Run tests before committing
+python manage.py test --settings=scraper_Api.test_settings
+
+# Check test coverage
+python -m coverage run --source='.' manage.py test
+python -m coverage report
 ```
 
-### Remove Repository [`GET/POST scraper/remove/`](https://dev.laurentiumarian.ro/scraper/remove/ "`GET/POST scraper/remove/`")
+### Pull Request Process
 
+1. **Update documentation** if you're changing APIs or adding features
+2. **Update the README.md** if necessary
+3. **Add tests** for new functionality
+4. **Ensure all tests pass** and coverage is maintained
+5. **Create a pull request** with:
+   - Clear description of changes
+   - Link to any related issues
+   - Screenshots for UI changes
+   - Updated documentation
 
-The function named "remove" is responsible for completely deleting the repository from the server.
+### Types of Contributions
 
-on Site
+#### 🐛 Bug Reports
+- Use the GitHub issue tracker
+- Include detailed reproduction steps
+- Provide environment details (OS, Python version, etc.)
+- Include relevant error messages and logs
 
-<img width="auto" alt="Screenshot 2023-05-07 at 13 30 18" src="https://user-images.githubusercontent.com/67306273/236672271-5fa2c717-f2f3-42ef-92b0-84a6477bf944.png">
+#### ✨ Feature Requests
+- Check existing issues first
+- Provide clear use case and rationale
+- Include mockups or examples if applicable
 
-or Bash script 
+#### 📖 Documentation
+- Fix typos and improve clarity
+- Add examples and tutorials
+- Translate documentation
+- Improve API documentation
+
+#### 🔧 Code Contributions
+- Fix bugs and implement features
+- Improve performance
+- Add tests and improve coverage
+- Refactor and clean up code
+
+### Coding Standards
+
+#### Django Best Practices
+- Use Django's built-in features (ORM, forms, admin)
+- Follow Django naming conventions
+- Use class-based views appropriately
+- Implement proper error handling
+
+#### API Design
+- Follow RESTful principles
+- Use appropriate HTTP status codes
+- Implement consistent response formats
+- Add proper validation and error messages
+
+#### Database
+- Write efficient queries
+- Use database indexes appropriately
+- Handle migrations carefully
+- Document schema changes
+
+### Development Setup for Contributors
 
 ```bash
-curl -X POST -d '{"repo":"your_repository_folder"}' https://dev.laurentiumarian.ro/scraper/remove/
+# Fork and clone the repository
+git clone https://github.com/your-username/scraper_Api.git
+cd scraper_Api/scraper_Api
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install development dependencies
+pip install -r requirements.txt
+pip install -r requirements-dev.txt  # If available
+
+# Set up pre-commit hooks
+pre-commit install
+
+# Create test database and run migrations
+export DJANGO_SETTINGS_MODULE=scraper_Api.test_settings
+python manage.py migrate
+
+# Run tests to ensure everything works
+python manage.py test
 ```
 
-## Contributions
-If you want to contribute to the development of the scraper, there are several ways you can do so. Firstly, you can help develop the source code by adding new functionalities or fixing existing issues. Secondly, you can contribute to improving the documentation or translations into other languages. Additionally, if you want to help but are unsure where to start, you can check our list of open issues and ask us how you can help. For more information, please refer to the "Contribute" section in our documentation.
+### Community Guidelines
 
-## Authors
- Our team is composed of a group of specialists and education enthusiasts who aim to make a significant contribution in this field.
+- **Be respectful** and inclusive
+- **Help others** learn and grow
+- **Share knowledge** and experiences
+- **Follow the code of conduct**
 
-- [peviitor team](https://github.com/peviitor-ro)
+## 📄 License
 
-We are dedicated to the continuous improvement and development of this project, so that we can provide the best resources for everyone interested.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+### MIT License Summary
+
+- ✅ **Commercial use** - Use for commercial purposes
+- ✅ **Distribution** - Distribute the software
+- ✅ **Modification** - Modify the source code
+- ✅ **Private use** - Use privately
+- ❗ **License and copyright notice** - Include license and copyright notice
+- ❌ **Liability** - No warranty or liability
+- ❌ **Warranty** - No warranty provided
+
+```
+MIT License
+
+Copyright (c) 2023 peviitor
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## 👥 Authors & Acknowledgments
+
+### Pe Viitor Team
+
+Our team is composed of specialists and education enthusiasts who aim to make a significant contribution in the field of job market transparency and accessibility.
+
+- **[Pe Viitor Team](https://github.com/peviitor-ro)** - Core development team
+- **Community Contributors** - Thank you to all our contributors!
+
+### Special Thanks
+
+- Django and Django REST Framework communities
+- Apache Solr community
+- All contributors who have helped improve this project
+
+### Contact
+
+- **Website**: [peviitor.ro](https://peviitor.ro)
+- **GitHub**: [github.com/peviitor-ro](https://github.com/peviitor-ro)
+- **Issues**: [GitHub Issues](https://github.com/peviitor-ro/scraper_Api/issues)
+
+---
+
+**Made with ❤️ by the Pe Viitor team**
+
+We are dedicated to the continuous improvement and development of this project to provide the best resources for everyone interested in job market data and transparency.

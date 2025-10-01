@@ -687,7 +687,8 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install development dependencies
 pip install -r requirements.txt
-pip install -r requirements-dev.txt  # If available
+# (Optional) Install development requirements if the file exists
+[ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
 
 # Set up pre-commit hooks
 pre-commit install

@@ -173,7 +173,11 @@ class DataSetView(APIView):
         data = DataSet.objects.filter(
             company=company, date__gte=last_30_days).order_by('date')
 
+        if not data.exists():
+            #get last 30 entries
+            data = DataSet.objects.filter(
+                company=company).order_by('-date')[:30]
+
         serializer = DataSetSerializer(data, many=True)
+
         return Response(serializer.data)
-
-

@@ -15,7 +15,7 @@ class SourceAdmin(admin.ModelAdmin):
 @admin.register(DataSet)
 class DataSetAdmin(admin.ModelAdmin):
     list_display = ['company', 'date', 'data']
-    search_fields = ['company']
+    search_fields = ['company__company']
     list_filter = ['date']
     date_hierarchy = 'date'
     ordering = ['date']

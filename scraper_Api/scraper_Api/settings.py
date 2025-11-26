@@ -148,6 +148,7 @@ MIDDLEWARE = [
 
     # Custom Middleware
     'users.middleware.RateLimitMiddleware',
+    'scraper_Api.core.middleware.ViewLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'scraper_Api.urls'

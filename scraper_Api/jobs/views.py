@@ -282,42 +282,6 @@ class SyncronizeJobs(APIView):
             job.publish()
 
         return Response({"message": "Jobs synchronized"})
-    
 
-class flush_and_populate(APIView):
-    solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=5)
-    def post(self, request):
-        user = request.user
 
-        if not user.is_superuser:
-            return Response(status=401)
-        
-        try:
-            
-            jobs = Job.objects.filter(published=True)
-            
-            jobs = [
-                {
-                    "id": job.getJobId,
-                    "job_link": job.job_link,
-                    "job_title": job.job_title,
-                    "company": job.company.company,
-                    "country": job.country.split(","),
-                    "city": job.city.split(","),
-                    "county": job.county.split(","),
-                    "remote": job.remote.split(","),
-                }
-                for job in jobs
-            ]
-
-            self.solr.delete(q="*:*")
-            self.solr.commit(expungeDeletes=True)
-
-            if jobs:
-                self.solr.add(jobs)
-                self.solr.commit(expungeDeletes=True)
-
-            return Response(200)
-        except Exception as e:
-            return Response(status=400)
 

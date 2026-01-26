@@ -1,13 +1,14 @@
 import logging
 import atexit
 import time
+import os
+import pysolr
 from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 from django_apscheduler.models import DjangoJob
-from .models import Company
-
 
 from .models import Company, DataSet
 from jobs.models import Job
@@ -16,7 +17,7 @@ from jobs.models import Job
 logging.basicConfig(level=logging.INFO)
 
 # Global: scheduler-ul
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(timezone="Europe/Bucharest")
 scheduler.add_jobstore(DjangoJobStore(), "default")
 
 
@@ -55,23 +56,91 @@ def clean():
     logging.info("Jobul clean() s-a încheiat cu succes!")
 
 
+def run_flush_and_populate():
+    """Flush Solr și repopulează joburile publicate."""
+    logging.info("🧹 Jobul weekly Solr flush a început!")
+
+    try:
+        url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
+        username = os.getenv("DATABASE_SOLR_USERNAME")
+        password = os.getenv("DATABASE_SOLR_PASSWORD")
+
+        solr = pysolr.Solr(
+            url=url,
+            auth=(username, password),
+            timeout=60,
+        )
+
+        jobs_qs = Job.objects.filter(published=True)
+
+        jobs = [
+            {
+                "id": job.getJobId,
+                "job_link": job.job_link,
+                "job_title": job.job_title,
+                "company": job.company.company,
+                "country": job.country.split(","),
+                "city": job.city.split(","),
+                "county": job.county.split(","),
+                "remote": job.remote.split(","),
+            }
+            for job in jobs_qs
+        ]
+
+        logging.info(f"Flushing and populating {len(jobs)} jobs to Solr")
+
+        # Flush total
+        solr.delete(q="*:*", commit=True)
+
+        # Repopulare
+        if jobs:
+            solr.add(jobs, commit=True)
+
+        logging.info("✅ Jobul weekly Solr flush s-a terminat cu succes!")
+
+    except Exception as e:
+        logging.error(f"❌ Eroare în jobul weekly Solr flush: {e}")
+
+
 def start():
-    """Pornește APScheduler și adaugă jobul dacă nu există."""
+    """Pornește APScheduler și adaugă joburile dacă nu există."""
     global scheduler
 
-    # Asigură-te că jobul nu e deja programat
+    # -------------------------
+    # Job zilnic: clean()
+    # -------------------------
     if not DjangoJob.objects.filter(id="clean_job").exists():
         logging.info("Jobul 'clean_job' nu există, îl programăm...")
         scheduler.add_job(
             clean,
             trigger="interval",
-            days=1,  # Sau 'minutes=1' pentru test
+            days=1,  # Rulează zilnic
             id="clean_job",
             jobstore="default",
             replace_existing=True,
+            max_instances=1,
+            misfire_grace_time=300,
         )
     else:
         logging.info("Jobul 'clean_job' există deja.")
+
+    # -------------------------
+    # Job săptămânal: flush Solr
+    # -------------------------
+    if not DjangoJob.objects.filter(id="weekly_solr_flush").exists():
+        logging.info("Jobul 'weekly_solr_flush' nu există, îl programăm...")
+        scheduler.add_job(
+            run_flush_and_populate,
+            trigger=CronTrigger(day_of_week="sun", hour=3,
+                                minute=30),  # Duminică la 03:30
+            id="weekly_solr_flush",
+            jobstore="default",
+            replace_existing=True,
+            max_instances=1,
+            misfire_grace_time=3600,  # 1 oră
+        )
+    else:
+        logging.info("Jobul 'weekly_solr_flush' există deja.")
 
     # Pornește schedulerul dacă nu e deja activ
     if not scheduler.running:
@@ -97,6 +166,7 @@ def stop_scheduler():
 
 # Înregistrăm funcția pentru oprire la shutdown
 atexit.register(stop_scheduler)
+
 
 # Dacă rulezi direct fișierul pentru test:
 if __name__ == "__main__":

@@ -1,4 +1,7 @@
+from typing import Any, Optional
+
 import docker
+from docker.errors import DockerException
 from .decorators import start
 
 class Container(object):
@@ -10,8 +13,18 @@ class Container(object):
         client_container (docker.models.containers.Container): The Docker container.
     """
 
-    client = docker.from_env()
-    client_container = None
+    client: Optional[Any] = None
+    client_container: Optional[Any] = None
+
+    @classmethod
+    def get_client(cls):
+        if cls.client is None:
+            try:
+                cls.client = docker.from_env()
+            except DockerException as exc:
+                raise RuntimeError('Docker is not available') from exc
+
+        return cls.client
 
     def get_container(self, name):
         """
@@ -23,7 +36,7 @@ class Container(object):
         Returns:
             docker.models.containers.Container: The Docker container.
         """
-        self.client_container = self.client.containers.get(name)
+        self.client_container = self.get_client().containers.get(name)
         return self
 
     def get_containers(self):
@@ -34,7 +47,7 @@ class Container(object):
             list: A list of container names.
         """
         containers = [
-            container.name for container in self.client.containers.list(all=True)]
+            container.name for container in self.get_client().containers.list(all=True)]
         return containers
 
     def create_container(self, language, name, environment=False, key=None, value=None):
@@ -80,17 +93,21 @@ class Container(object):
             }
 
             if environment:
-                container_config['environment'] = images.get(language).get('environment')
+                language_config = images.get(language) or {}
+                environment_config = language_config.get('environment')
+                if environment_config:
+                    container_config['environment'] = dict(environment_config)
 
             if key and value:
-                if container_config.get('environment'):
-                    container_config.get('environment').update({key: value})
+                existing_environment = container_config.get('environment')
+                if isinstance(existing_environment, dict):
+                    existing_environment.update({key: value})
                 else:
-                    container_config['environment'] = images[language]['environment']
+                    container_config['environment'] = dict(images[language]['environment'])
                     container_config['environment'].update({key: value})
                     print(container_config)
 
-            self.client_container = self.client.containers.create(
+            self.client_container = self.get_client().containers.create(
                 **container_config)
             return self
         except Exception as e:
@@ -107,7 +124,7 @@ class Container(object):
             None
         """
         
-        container = self.client.containers.get(name)
+        container = self.get_client().containers.get(name)
         container.remove(force=True)
 
     
@@ -124,6 +141,9 @@ class Container(object):
             tuple: A tuple containing the stdout (str), stderr (str), and return code (int) of the command.
         """
         
+        if self.client_container is None:
+            raise RuntimeError('Docker container is not available')
+
         exec_command = self.client_container.exec_run(
             command, demux=True, workdir=path)
 

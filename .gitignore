@@ -164,3 +164,14 @@ scrapers/
 .DS_Store
 images/
 root/
+node_modules/
+
+# Frontend build artifacts
+dist/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+UI/

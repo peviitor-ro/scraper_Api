@@ -83,7 +83,16 @@ class GetCompanies(APIView):
 class GetTotalJobs(APIView):
     def get(self, _):
         total_jobs = Job.objects.filter(published=True).count()
-        return Response({"total": total_jobs})
+        companies = sorted({
+            company.strip()
+            for company in Company.objects.values_list('company', flat=True)
+            if company and company.strip()
+        })
+        return Response({
+            "total": total_jobs,
+            "companies": companies,
+            "companies_count": len(companies),
+        })
     
 
 @permission_classes([AllowAny])

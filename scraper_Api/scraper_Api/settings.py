@@ -66,6 +66,9 @@ CORS_ALLOWED_ORIGINS = (
     'http://localhost:3000',
     "https://admin.zira.ro",
 )
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://[a-z0-9-]+\.netlify\.app$',
+]
 CORS_ALLOW_HEADERS = ('*')
 CORS_ALLOW_METHODS = ['GET', 'POST']
 CORS_ALLOW_CREDENTIALS = True

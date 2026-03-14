@@ -84,7 +84,20 @@ class GetTotalJobs(APIView):
     def get(self, _):
         published_jobs = Job.objects.filter(published=True)
         total_jobs = published_jobs.count()
-        salary_floor_job = published_jobs.filter(salary_min__gt=0).exclude(salary_currency__isnull=True).exclude(salary_currency='').order_by('salary_currency', 'salary_min').values('salary_min', 'salary_currency').first()
+        salary_candidates = list(
+            published_jobs.filter(salary_min__gte=1000, salary_currency='RON')
+            .order_by('salary_min')
+            .values_list('salary_min', flat=True)
+        )
+
+        salary_floor = None
+        salary_floor_currency = None
+
+        if salary_candidates:
+            percentile_index = max(0, round((len(salary_candidates) - 1) * 0.1))
+            salary_floor = salary_candidates[percentile_index]
+            salary_floor_currency = 'RON'
+
         companies = sorted({
             company.strip()
             for company in Company.objects.values_list('company', flat=True)
@@ -92,8 +105,8 @@ class GetTotalJobs(APIView):
         })
         return Response({
             "total": total_jobs,
-            "salary_floor": salary_floor_job.get('salary_min') if salary_floor_job else None,
-            "salary_floor_currency": salary_floor_job.get('salary_currency') if salary_floor_job else None,
+            "salary_floor": salary_floor,
+            "salary_floor_currency": salary_floor_currency,
             "companies": companies,
             "companies_count": len(companies),
         })

@@ -64,7 +64,9 @@ CORS_ALLOWED_ORIGINS = (
     'https://scrapers.peviitor.ro',
     'https://api.laurentiumarian.ro',
     'http://localhost:3000',
-    "https://admin.zira.ro",
+    'https://admin.zira.ro',
+    'https://joblio.ro',
+    'https://www.joblio.ro',
 )
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r'^https://[a-z0-9-]+\.netlify\.app$',

@@ -11,7 +11,7 @@ class JobAddSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = ['job_link', 'job_title', 'company', 'country',
-                  'city', 'county', 'remote', 'job_id', 'company_name']
+                  'city', 'county', 'salary', 'remote', 'job_id', 'company_name']
 
     def create(self, validated_data):
         validate = serializers.ChoiceField(choices=[('remote', 'remote'), ('on-site', 'on-site'), ('hybrid', 'hybrid')],
@@ -53,7 +53,7 @@ class GetJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = ['id','job_link', 'job_title', 'company', 'country', 'city',
-                  'county', 'remote', 'edited', 'published', 'posted', 'company_name']
+                  'county', 'salary', 'remote', 'edited', 'published', 'posted', 'company_name']
 
     def get_company_name(self, obj):
         return obj.company.company

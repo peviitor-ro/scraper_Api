@@ -12,6 +12,7 @@ class Job(models.Model):
     county = models.TextField(blank=True)
     job_link = models.CharField(max_length=1000)
     job_title = models.TextField()
+    salary = models.TextField(blank=True, null=True)
     remote = models.CharField(max_length=50, blank=True)
     edited = models.BooleanField(default=False)
     published = models.BooleanField(default=False)

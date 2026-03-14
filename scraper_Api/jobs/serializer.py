@@ -12,13 +12,31 @@ class JobAddSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = ['job_link', 'job_title', 'company', 'country',
-                  'city', 'county', 'salary', 'salary_min', 'salary_max', 'remote', 'job_id', 'company_name']
+                  'city', 'county', 'salary', 'salary_min', 'salary_max', 'salary_currency', 'remote', 'job_id', 'company_name']
 
     def validate(self, attrs):
         salary = attrs.pop('salary', None)
 
         if salary and attrs.get('salary_min') is None and attrs.get('salary_max') is None:
-            salary_parts = [part.strip() for part in str(salary).replace('RON', '').replace('ron', '').split('-')]
+            salary_text = str(salary).strip()
+            salary_upper = salary_text.upper()
+            currency_map = {
+                'RON': 'RON',
+                'LEI': 'RON',
+                'LEU': 'RON',
+                'EUR': 'EUR',
+                'EURO': 'EUR',
+                'USD': 'USD',
+                'GBP': 'GBP',
+            }
+
+            if not attrs.get('salary_currency'):
+                for token, normalized_currency in currency_map.items():
+                    if token in salary_upper:
+                        attrs['salary_currency'] = normalized_currency
+                        break
+
+            salary_parts = [part.strip() for part in salary_upper.replace('RON', '').replace('LEI', '').replace('LEU', '').replace('EUR', '').replace('EURO', '').replace('USD', '').replace('GBP', '').split('-')]
             numeric_parts = []
 
             for part in salary_parts:
@@ -35,6 +53,9 @@ class JobAddSerializer(serializers.ModelSerializer):
         if attrs.get('salary_min') is not None and attrs.get('salary_max') is not None:
             if attrs['salary_min'] > attrs['salary_max']:
                 raise serializers.ValidationError('salary_min cannot be greater than salary_max')
+
+        if attrs.get('salary_currency'):
+            attrs['salary_currency'] = str(attrs['salary_currency']).strip().upper()
 
         return attrs
 
@@ -78,7 +99,7 @@ class GetJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = ['id','job_link', 'job_title', 'company', 'country', 'city',
-                  'county', 'salary_min', 'salary_max', 'remote', 'edited', 'published', 'posted', 'company_name']
+                  'county', 'salary_min', 'salary_max', 'salary_currency', 'remote', 'edited', 'published', 'posted', 'company_name']
 
     def get_company_name(self, obj):
         return obj.company.company

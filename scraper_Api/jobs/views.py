@@ -54,6 +54,7 @@ class JobView(object):
                     "salary": self.transform_data(job.get("salary")),
                     "salary_min": job.get("salary_min"),
                     "salary_max": job.get("salary_max"),
+                    "salary_currency": self.transform_data(job.get("salary_currency")),
                     "remote": self.transform_data(job.get("remote")),
                     "company": self.transform_data(job.get("company")).title(),
                     "companyId": job.get("companyId"),

@@ -14,6 +14,7 @@ class Job(models.Model):
     job_title = models.TextField()
     salary_min = models.IntegerField(blank=True, null=True)
     salary_max = models.IntegerField(blank=True, null=True)
+    salary_currency = models.CharField(max_length=10, blank=True, null=True)
     remote = models.CharField(max_length=50, blank=True)
     edited = models.BooleanField(default=False)
     published = models.BooleanField(default=False)

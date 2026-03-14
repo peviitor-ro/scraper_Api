@@ -51,6 +51,7 @@ class JobView(object):
                     "country": self.transform_data(job.get("country")),
                     "city": self.transform_data(job.get("city")),
                     "county": self.transform_data(job.get("county")),
+                    "salary": self.transform_data(job.get("salary")),
                     "remote": self.transform_data(job.get("remote")),
                     "company": self.transform_data(job.get("company")).title(),
                     "companyId": job.get("companyId"),

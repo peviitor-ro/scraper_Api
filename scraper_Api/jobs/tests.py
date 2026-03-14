@@ -56,12 +56,8 @@ class JobModelTest(TestCase):
         self.assertIsInstance(job_id, str)
         self.assertEqual(len(job_id), 32)  # MD5 hash length
     
-    @patch('jobs.models.solr')
-    def test_job_publish_success(self, mock_solr):
-        """Test successful job publishing to Solr"""
-        mock_solr.add.return_value = None
-        mock_solr.commit.return_value = None
-        
+    def test_job_publish_success(self):
+        """Test successful job publishing"""
         job = Job.objects.create(
             company=self.company,
             country='Romania',
@@ -74,16 +70,12 @@ class JobModelTest(TestCase):
         
         response = job.publish()
         
-        mock_solr.add.assert_called_once()
-        mock_solr.commit.assert_called_once()
+        job.refresh_from_db()
+        self.assertTrue(job.published)
         self.assertEqual(response.status_code, 200)
     
-    @patch('jobs.models.solr')
-    def test_job_unpublish_success(self, mock_solr):
-        """Test successful job unpublishing from Solr"""
-        mock_solr.delete.return_value = None
-        mock_solr.commit.return_value = None
-        
+    def test_job_unpublish_success(self):
+        """Test successful job unpublishing"""
         job = Job.objects.create(
             company=self.company,
             country='Romania',
@@ -94,18 +86,12 @@ class JobModelTest(TestCase):
         
         response = job.unpublish()
         
-        mock_solr.delete.assert_called_once()
-        mock_solr.commit.assert_called_once()
         job.refresh_from_db()
         self.assertFalse(job.published)
         self.assertEqual(response.status_code, 200)
     
-    @patch('jobs.models.solr')
-    def test_job_delete_published(self, mock_solr):
-        """Test deleting a published job removes it from Solr"""
-        mock_solr.delete.return_value = None
-        mock_solr.commit.return_value = None
-        
+    def test_job_delete_published(self):
+        """Test deleting a published job removes it from database"""
         job = Job.objects.create(
             company=self.company,
             country='Romania',
@@ -114,13 +100,13 @@ class JobModelTest(TestCase):
             published=True
         )
         
+        job_id = job.id
         job.delete()
         
-        mock_solr.delete.assert_called_once()
-        mock_solr.commit.assert_called_once()
+        self.assertFalse(Job.objects.filter(id=job_id).exists())
     
     def test_job_delete_unpublished(self):
-        """Test deleting an unpublished job doesn't call Solr"""
+        """Test deleting an unpublished job works without errors"""
         job = Job.objects.create(
             company=self.company,
             country='Romania',
@@ -128,8 +114,10 @@ class JobModelTest(TestCase):
             job_title='Software Developer',
             published=False
         )
-        
+
+        job_id = job.id
         job.delete()  # Should not raise any errors
+        self.assertFalse(Job.objects.filter(id=job_id).exists())
 
 
 class JobViewsTest(APITestCase):

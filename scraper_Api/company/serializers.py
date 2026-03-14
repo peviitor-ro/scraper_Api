@@ -1,13 +1,7 @@
 from rest_framework import serializers
-from requests.auth import HTTPBasicAuth
-import pysolr
 from users.models import CustomUser
 from .models import Company, DataSet
 from jobs.models import Job
-
-from dotenv import load_dotenv
-import os
-load_dotenv()
 
 class CompanySerializer(serializers.ModelSerializer):
     jobsCount = serializers.SerializerMethodField()
@@ -61,23 +55,13 @@ class CompanySerializer(serializers.ModelSerializer):
     
 
     def get_logo(self, obj):
-        
-        url = os.getenv("DATABASE_SOLR") + '/solr/auth'
-        username = os.getenv("DATABASE_SOLR_USERNAME")
-        password = os.getenv("DATABASE_SOLR_PASSWORD")
-
         try:
-            solr = pysolr.Solr(url, auth=HTTPBasicAuth(username, password), timeout=60)
-            company = obj.company
-            
-            query = f'id:{company} OR id:{company.lower()} OR id:{company.upper()} OR id:{company.capitalize()}'
-            results = solr.search(query, **{
-                'rows': '1',
-            })
-
-            return results.docs[0].get('logo')
+            if obj.source and obj.source.image:
+                return obj.source.image.url
         except Exception:
             return None
+
+        return None
 
 
 class DataSetSerializer(serializers.ModelSerializer):

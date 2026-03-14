@@ -3,7 +3,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from datetime import datetime
-from requests.auth import HTTPBasicAuth
 
 from .constants import JOB_SORT_OPTIONS
 
@@ -18,13 +17,8 @@ from .serializer import (
 
 from company.serializers import CompanySerializer
 from django.utils.timezone import datetime
-from pysolr import Solr
-import os
 
 JOB_NOT_FOUND = {"message": "Job not found"}
-url = os.getenv("DATABASE_SOLR") + "/solr/jobs"
-username = os.getenv("DATABASE_SOLR_USERNAME")
-password = os.getenv("DATABASE_SOLR_PASSWORD")
 
 
 class JobView(object):
@@ -39,7 +33,6 @@ class JobView(object):
 
                 setattr(job_obj, attribute, not getattr(job_obj, attribute))
                 job_obj.date = datetime.now()
-                job_obj.publish()
                 job_obj.save()
 
             return Response({"message": f"Job {attribute}"})
@@ -261,27 +254,6 @@ class PublishJob(APIView, JobView):
     def post(self, request):
         response = self.update(request.data, "published")
         return response
-
-
-class SyncronizeJobs(APIView):
-    def post(self, request):
-        company = request.data.get("company")
-        print(company)
-
-        if not company:
-            return Response(status=400)
-
-        solr = Solr(url=url, auth=HTTPBasicAuth(username, password), timeout=60)
-        solr.delete(q=f"company:{company}")
-        solr.commit(expungeDeletes=True)
-
-        company_instance = get_object_or_404(Company, id=company)
-        jobs = Job.objects.filter(company=company_instance, published=True)
-
-        for job in jobs:
-            job.publish()
-
-        return Response({"message": "Jobs synchronized"})
 
 
 

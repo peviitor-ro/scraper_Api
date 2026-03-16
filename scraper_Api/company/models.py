@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.timezone import datetime
+from django.utils.timezone import now
 import os
 
 
@@ -68,10 +68,9 @@ class DataSet(models.Model):
 
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE, related_name='CompanyData')
-    date = models.DateField(default=datetime.now())
+    date = models.DateField(default=now)
     data = models.IntegerField()
 
     def __str__(self):
         return self.company.company
-
 

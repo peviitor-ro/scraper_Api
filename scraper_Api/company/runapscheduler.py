@@ -2,7 +2,9 @@ import logging
 import atexit
 import time
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 from django_apscheduler.models import DjangoJob
@@ -16,6 +18,10 @@ logging.basicConfig(level=logging.INFO)
 # Global: scheduler-ul
 scheduler = BackgroundScheduler(timezone="Europe/Bucharest")
 scheduler.add_jobstore(DjangoJobStore(), "default")
+PUBLISH_JOB_ID = "publish_pending_jobs"
+CLEAN_JOB_ID = "clean_job"
+JOB_LINK_TIMEOUT = 5
+MAX_PUBLISH_WORKERS = 5
 
 
 def unpublish_jobs(company):
@@ -24,6 +30,89 @@ def unpublish_jobs(company):
     for job in jobs:
         if job.published:
             job.unpublish()  # Presupunem că metoda salvează obiectul
+
+
+def has_valid_location(job):
+    remote_value = (job.remote or "").lower()
+    has_remote = "remote" in remote_value
+    has_locality = bool(job.city and job.county)
+    return has_remote or has_locality
+
+
+def is_job_link_available(job_link):
+    if not job_link:
+        return False
+
+    try:
+        response = requests.head(
+            job_link,
+            timeout=JOB_LINK_TIMEOUT,
+            allow_redirects=True,
+        )
+        return response.ok
+    except requests.RequestException as exc:
+        logging.warning("Link indisponibil pentru %s: %s", job_link, exc)
+        return False
+
+
+def publish_company_jobs(company):
+    logging.info("Verific joburile pentru compania %s", company.company)
+    jobs = Job.objects.filter(company=company, published=False)
+    published_count = 0
+
+    for job in jobs.iterator():
+        if not is_job_link_available(job.job_link):
+            logging.info(
+                "Jobul %s de la %s nu este disponibil",
+                job.job_title,
+                company.company,
+            )
+            continue
+
+        if not has_valid_location(job):
+            logging.info(
+                "Jobul %s de la %s nu are locatie valida",
+                job.job_title,
+                company.company,
+            )
+            continue
+
+        job.publish()
+        published_count += 1
+
+    logging.info(
+        "%s joburi au fost publicate pentru compania %s",
+        published_count,
+        company.company,
+    )
+    return published_count
+
+
+def publish_pending_jobs():
+    logging.info("Jobul publish_pending_jobs() a inceput!")
+    companies = Company.objects.filter(jobs__published=False).distinct()
+
+    if not companies.exists():
+        logging.info("Nu exista companii cu joburi nepublicate.")
+        return
+
+    total_published = 0
+    with ThreadPoolExecutor(max_workers=MAX_PUBLISH_WORKERS) as executor:
+        futures = {
+            executor.submit(publish_company_jobs, company): company.company
+            for company in companies
+        }
+
+        for future in as_completed(futures):
+            company_name = futures[future]
+            try:
+                total_published += future.result()
+            except Exception as exc:
+                logging.exception(
+                    "Eroare la publicarea joburilor pentru %s: %s",
+                    company_name,
+                    exc,
+                )
 
 
 def clean():
@@ -60,13 +149,13 @@ def start():
     # -------------------------
     # Job zilnic: clean()
     # -------------------------
-    if not DjangoJob.objects.filter(id="clean_job").exists():
+    if not DjangoJob.objects.filter(id=CLEAN_JOB_ID).exists():
         logging.info("Jobul 'clean_job' nu există, îl programăm...")
         scheduler.add_job(
             clean,
             trigger="interval",
             days=1,  # Rulează zilnic
-            id="clean_job",
+            id=CLEAN_JOB_ID,
             jobstore="default",
             replace_existing=True,
             max_instances=1,
@@ -74,6 +163,21 @@ def start():
         )
     else:
         logging.info("Jobul 'clean_job' există deja.")
+
+    if not DjangoJob.objects.filter(id=PUBLISH_JOB_ID).exists():
+        logging.info("Jobul 'publish_pending_jobs' nu exista, il programam...")
+        scheduler.add_job(
+            publish_pending_jobs,
+            trigger="interval",
+            days=1,  # Rulează zilnic
+            id=PUBLISH_JOB_ID,
+            jobstore="default",
+            replace_existing=True,
+            max_instances=1,
+            misfire_grace_time=300,
+        )
+    else:
+        logging.info("Jobul 'publish_pending_jobs' exista deja.")
 
     # Pornește schedulerul dacă nu e deja activ
     if not scheduler.running:

@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import CustomUser
 from jobs.models import Company
-from scraper.models import Scraper
 from rest_framework.response import Response
 
 class UserSerializer(serializers.Serializer):
@@ -37,9 +36,6 @@ class UserUpdateSerializer(serializers.Serializer):
                 if key == 'company':
                     companies = Company.objects.filter(company__in=value)
                     user.company.set(companies)
-                elif key == 'scraper':
-                    scrapers = Scraper.objects.filter(name__in=value)
-                    user.scraper.set(scrapers)
                 else:
                     setattr(user, key, value)
         user.save()
@@ -52,5 +48,4 @@ class UserUpdateSerializer(serializers.Serializer):
 
 
     
-
 

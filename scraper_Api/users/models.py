@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 
 from .managers import CustomUserManager
 from company.models import Company
-from scraper.models import Scraper
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_("email address"), unique=True)
@@ -15,7 +14,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
     company = models.ManyToManyField(Company, related_name='Companies', blank=True)
-    scraper = models.ManyToManyField(Scraper, related_name='Scrapers', blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -30,5 +28,4 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
         if self.is_superuser:
             self.company.set(Company.objects.values_list('id', flat=True))
-            self.scraper.set(Scraper.objects.values_list('id', flat=True))
     

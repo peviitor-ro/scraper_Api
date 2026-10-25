@@ -17,5 +17,5 @@ class CustomUserAdmin(admin.ModelAdmin):
     list_editable = ["is_active", "is_staff", "is_superuser"]
 
     # Afișează câmpurile în formularul admin
-    fields = ["email", "company", "scraper", "is_active",
+    fields = ["email", "company", "is_active",
               "is_staff", "is_superuser", "last_login", "date_joined"]

@@ -23,7 +23,6 @@ urlpatterns = [
     path('companies/', include('company.urls')),
     path('jobs/', include('jobs.urls')),
     path('admin/', admin.site.urls),
-    path('scraper/', include('scraper.urls')),
     path('orase/', include('orase.urls')),
     path('mobile/', include('mobile.urls')),
     path('notifications/', include('notifications.urls')),

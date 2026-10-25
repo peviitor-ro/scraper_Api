@@ -1,16 +1,16 @@
 # Pe Viitor - Job Scraping API
 ![Pe Viitor logo](https://peviitor.ro/static/media/peviitor_logo.df4cd2d4b04f25a93757bb59b397e656.svg)
 
-**A comprehensive Django REST API for managing job scrapers, companies, and job listings with real-time search capabilities.**
+**A comprehensive Django REST API for managing companies and job listings with real-time search capabilities.**
 
-Pe Viitor is a robust web service designed to automate job data collection from various websites and provide powerful search and filtering capabilities. The platform allows you to manage job scrapers, track companies, and serve job data through a modern REST API with real-time search powered by Apache Solr.
+Pe Viitor is a robust web service designed to provide powerful job data management and search capabilities. The platform allows you to track companies and serve job data through a modern REST API with real-time search powered by Apache Solr.
 
 ## ✨ Features
 
 ### 🏢 Company Management
 - Create, update, and delete company profiles
 - Track company job statistics and historical data
-- Link companies to their data sources and scrapers
+- Link companies to their data sources
 - Company-specific job clearing and synchronization
 
 ### 💼 Job Management
@@ -19,14 +19,6 @@ Pe Viitor is a robust web service designed to automate job data collection from 
 - Publish/unpublish jobs with automatic Solr search index updates
 - Filter jobs by company, location, remote work options, and publication status
 - Advanced job search with infinite scroll pagination
-
-### 🤖 Scraper Management
-- Support for Python and JavaScript scrapers
-- Automated dependency installation (requirements.txt, package.json)
-- Git repository integration for scraper code management
-- Containerized scraper execution with Docker
-- Scraper testing and validation framework
-- Automatic updates from Git repositories
 
 ### 🔍 Real-time Search
 - Apache Solr-powered job search engine
@@ -38,7 +30,7 @@ Pe Viitor is a robust web service designed to automate job data collection from 
 - Custom user authentication with email-based login
 - JWT token authentication for API access
 - Role-based permissions (superuser, company-specific access)
-- User-company and user-scraper associations
+- User-company associations
 
 ### 📱 Additional Features
 - Real-time notifications via WebSockets (Django Channels)
@@ -56,7 +48,6 @@ Pe Viitor is a robust web service designed to automate job data collection from 
 - **Real-time Features**: Django Channels with WebSocket support
 - **Authentication**: JWT tokens with Django REST Framework SimpleJWT
 - **Task Scheduling**: APScheduler for background jobs
-- **Containerization**: Docker for scraper execution
 - **Image Processing**: Pillow for company logos and images
 
 ## 🚀 Quick Setup
@@ -241,47 +232,6 @@ curl -X POST http://localhost:8000/jobs/sync/ \
   -d '{"company": 1}'
 ```
 
-### 🤖 Scraper Endpoints
-
-#### Add a Scraper Repository
-```bash
-curl -X POST http://localhost:8000/scraper/add/ \
-  -H "Authorization: Bearer your_jwt_token" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://github.com/username/job-scraper.git"}'
-```
-
-#### List Scraper Files
-```bash
-# List files in a scraper repository
-curl -H "Authorization: Bearer your_jwt_token" \
-  "http://localhost:8000/scraper/your-repo-name/"
-```
-
-#### Run a Scraper
-```bash
-# Run a specific scraper file
-curl -X POST http://localhost:8000/scraper/your-repo-name/ \
-  -H "Authorization: Bearer your_jwt_token" \
-  -H "Content-Type: application/json" \
-  -d '{"file": "scraper.py"}'
-
-# Force run a scraper (ignore recent runs)
-curl -X POST http://localhost:8000/scraper/your-repo-name/ \
-  -H "Authorization: Bearer your_jwt_token" \
-  -H "Content-Type: application/json" \
-  -d '{"file": "scraper.py", "force": "true"}'
-```
-
-#### Update Scraper Repository
-```bash
-# Pull latest changes from Git
-curl -X POST http://localhost:8000/scraper/your-repo-name/ \
-  -H "Authorization: Bearer your_jwt_token" \
-  -H "Content-Type: application/json" \
-  -d '{"update": "true"}'
-```
-
 ### Python API Examples
 
 ```python
@@ -322,13 +272,6 @@ params = {
 response = requests.get(f"{API_BASE}/jobs/get/", params=params, headers=HEADERS)
 jobs = response.json()
 
-# Run a scraper
-scraper_data = {"file": "companies/example_scraper.py"}
-response = requests.post(
-    f"{API_BASE}/scraper/example-repo/",
-    json=scraper_data,
-    headers=HEADERS
-)
 ```
 
 ## 📁 Project Structure
@@ -353,13 +296,6 @@ scraper_Api/
 │   │   ├── views.py            # Job CRUD, search, publish operations
 │   │   ├── serializer.py       # Job serializers
 │   │   └── urls.py             # Job endpoints
-│   │
-│   ├── scraper/                # Scraper management app
-│   │   ├── models.py           # Scraper model
-│   │   ├── views.py            # Scraper execution and management
-│   │   ├── utils/              # Scraper utilities
-│   │   │   └── scraper.py      # Core scraper logic
-│   │   └── urls.py             # Scraper endpoints
 │   │
 │   ├── users/                  # User management app
 │   │   ├── models.py           # CustomUser model
@@ -400,13 +336,8 @@ scraper_Api/
 #### User Model (`users/models.py`)
 - **CustomUser**: Extends Django's AbstractBaseUser
 - Email-based authentication
-- Many-to-many relationships with companies and scrapers
-- Automatic superuser permissions for all companies/scrapers
-
-#### Scraper Model (`scraper/models.py`)
-- **Scraper**: Tracks scraper repositories and metadata
-- Supports Python, JavaScript, and JMeter scripts
-- Linked to users for access control
+- Many-to-many relationships with companies
+- Automatic superuser permissions for all companies
 
 ## 🔧 Development & Deployment
 
@@ -433,8 +364,6 @@ http://localhost:8000/admin/
 # Build and run with Docker Compose
 docker-compose up --build
 
-# Run scrapers in containers
-docker run -it your-scraper-image python scraper.py
 ```
 
 ### Environment Configuration
@@ -483,12 +412,10 @@ python manage.py test
 python manage.py test --verbosity=2
 
 # Run specific app tests
-python manage.py test scraper
 python manage.py test users
 python manage.py test company
 
 # Run specific test classes
-python manage.py test scraper.tests.ScraperModelTest
 python manage.py test users.tests.CustomUserModelTest
 ```
 
@@ -505,7 +432,6 @@ python -m pytest
 python -m pytest -v
 
 # Run specific tests
-python -m pytest scraper/tests.py
 python -m pytest users/tests.py -v
 ```
 

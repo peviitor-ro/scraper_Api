@@ -7,8 +7,7 @@ User = get_user_model()
 class CustomUserCreationForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['email', 'company', 'scraper',
-                  'is_active', 'is_staff', 'is_superuser']
+        fields = ['email', 'company', 'is_active', 'is_staff', 'is_superuser']
 
     def save(self, commit=True):
         user = super().save(commit=False)

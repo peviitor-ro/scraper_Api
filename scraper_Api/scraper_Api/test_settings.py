@@ -32,7 +32,6 @@ INSTALLED_APPS = [
     'rest_framework',
     
     # Project apps
-    'scraper',
     'company',
     'jobs',
     'users',

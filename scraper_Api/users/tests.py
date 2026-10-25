@@ -7,7 +7,6 @@ from .models import CustomUser
 from .managers import CustomUserManager
 from .middleware import RateLimitMiddleware
 from company.models import Company, Source
-from scraper.models import Scraper
 from unittest.mock import Mock
 
 User = get_user_model()
@@ -15,6 +14,9 @@ User = get_user_model()
 
 class CustomUserModelTest(TestCase):
     """Test cases for CustomUser model"""
+
+    def test_user_has_no_scraper_association(self):
+        self.assertNotIn('scraper', [field.name for field in User._meta.get_fields()])
     
     def test_create_user(self):
         """Test creating a regular user"""
@@ -59,25 +61,22 @@ class CustomUserModelTest(TestCase):
                 password='anotherpass123'
             )
     
-    def test_superuser_gets_all_relations(self):
-        """Test that superuser gets all companies and scrapers"""
+    def test_superuser_gets_all_companies(self):
+        """Test that superuser gets all companies"""
         # Create some test data
         source = Source.objects.create(sursa='test_source')
         company = Company.objects.create(
             source=source,
             company='Test Company'
         )
-        scraper = Scraper.objects.create(name='test_scraper')
-        
         # Create superuser
         user = User.objects.create_superuser(
             email='admin@example.com',
             password='adminpass123'
         )
         
-        # Check that superuser has access to all companies and scrapers
+        # Check that superuser has access to all companies
         self.assertIn(company.id, user.company.values_list('id', flat=True))
-        self.assertIn(scraper.id, user.scraper.values_list('id', flat=True))
 
 
 class CustomUserManagerTest(TestCase):

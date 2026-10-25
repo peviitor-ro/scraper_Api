@@ -62,7 +62,6 @@ CORS_ALLOWED_ORIGINS = (
     'http://127.0.0.1:5500',
     'http://localhost:5500',
     'https://admin.peviitor.ro',
-    'https://scrapers.peviitor.ro',
     'https://api.laurentiumarian.ro',
     'http://localhost:3000',
     'https://admin.zira.ro',
@@ -100,7 +99,6 @@ INSTALLED_APPS = [
     'corsheaders',
 
     # Apps
-    'scraper',
     'company',
     'jobs',
     'users',

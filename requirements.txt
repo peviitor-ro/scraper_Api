@@ -17,7 +17,6 @@ django-apscheduler==0.6.2
 django-cors-headers==4.3.1
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.1
-docker==7.0.0
 hyperlink==21.0.0
 idna==3.6
 incremental==24.7.2

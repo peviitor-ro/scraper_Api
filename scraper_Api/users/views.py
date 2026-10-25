@@ -174,23 +174,14 @@ class UsersCompany(APIView):
         companies = list(
             user.company.values('id', 'company').order_by('company')
         )
-        scrapers = list(
-            user.scraper.values('id', 'name')
-        )
-
         if user_get_email:
             user_get = User.objects.get(email=user_get_email)
 
             user_company_ids = set(
                 user_get.company.values_list('id', flat=True))
-            user_scraper_names = set(
-                user_get.scraper.values_list('name', flat=True))
 
             for company in companies:
                 company['selected'] = company['id'] in user_company_ids
-
-            for scraper in scrapers:
-                scraper['selected'] = scraper['name'] in user_scraper_names
 
         users = User.objects.filter(is_superuser=False).exclude(email=user.email) \
             .order_by('email') \
@@ -200,7 +191,6 @@ class UsersCompany(APIView):
             "is_superuser": user.is_superuser,
             "is_staff": user.is_staff,
             "companies": companies,
-            "scrapers": scrapers,
             "users": users,
         }
         return Response(response)

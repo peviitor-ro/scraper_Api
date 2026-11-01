@@ -32,10 +32,10 @@ class GetJobView(APIView):
             cities_lst = cities.split(",")
             counties_lst = counties.split(",")
             
+            location_filter = Q()
             for city, county in zip(cities_lst, counties_lst):
-                filter_search &= Q(city__icontains=city) & Q(county__icontains=county)
-
-            filter_search |= Q(city__in=cities_lst) & Q(county__in=counties_lst)
+                location_filter |= Q(city__icontains=city) & Q(county__icontains=county)
+            filter_search &= location_filter
         elif cities:
             cities_lst = cities.split(",")
             filter_search &= Q(city__in=cities_lst)
@@ -54,7 +54,7 @@ class GetJobView(APIView):
             remote_lst = remote.split(",")
             filter_search &= Q(remote__in=remote_lst)
 
-        queryset = Job.objects.filter(filter_search)
+        queryset = Job.objects.filter(filter_search).order_by("job_title")
 
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(queryset, request)
